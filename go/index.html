@@ -387,6 +387,37 @@ window.obDate=function(id){OB.a[id]=$('#ob-date').value||f(new Date());OB.i++;re
 
 /* ---------- AI free-text path ---------- */
 const API='https://vela-api-coral.vercel.app';
+/* 国内直连优先：浏览器直接调 DeepSeek（预充值余额封顶，风险有界）；失败再走海外中转 */
+const DSKB='NTEyOTJhNzBhZjhjZjE2YmU1NDRkMmU2YmVlYjM1ZDcta3M=';
+function dsk(){return atob(DSKB).split('').reverse().join('');}
+function aiSys(){
+  const today=f(new Date());
+  return '你是女性训练 App「Vela」的教练解析器。用户多为备赛跑者，会描述：最近一次跑步的距离和用时/配速（真实水平）、目标比赛与日期、想提升的方向、每周可训练天数、伤病约束。把描述解析为严格 JSON（不要输出任何其他内容）：\n{\n "goal": "race|fatloss|flex|fitness",\n "dist": "5k|10k|half|full|trail"|null,\n "date": "YYYY-MM-DD"|null,   // 相对时间(如三个月后/10月底)换算成具体日期，今天是 '+today+'\n "level": "3|5|10|15",        // 依据最近跑步表现推档：配速>7:30或只能跑3km给"3"；能跑5km给"5"；能跑10km或5km配速<6:00给"10"；能跑15km+给"15"\n "days": "2-3|4-5|6+",\n "style": "walkrun|run|mix|15|30|45|",\n "notes": "…",                // 把「最近成绩+成绩目标+伤病约束」压缩成一句中文备注，无则空串\n "coach": "…"                 // 温暖专业的教练口吻一句话(40字内)：必须引用她给出的具体数据(配速或目标)\n}';
+}
+async function aiParse(text){
+  /* 1st: direct DeepSeek (domestic, fast) */
+  try{
+    const ctl=new AbortController();const k=setTimeout(()=>ctl.abort(),15000);
+    const r=await fetch('https://api.deepseek.com/chat/completions',{
+      method:'POST',signal:ctl.signal,
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+dsk()},
+      body:JSON.stringify({model:'deepseek-chat',temperature:0.2,max_tokens:400,
+        response_format:{type:'json_object'},
+        messages:[{role:'system',content:aiSys()},{role:'user',content:text}]})});
+    clearTimeout(k);
+    if(!r.ok)throw new Error('ds '+r.status);
+    const d=await r.json();
+    return JSON.parse(d.choices[0].message.content);
+  }catch(e){
+    /* 2nd: overseas relay fallback */
+    const ctl=new AbortController();const k=setTimeout(()=>ctl.abort(),12000);
+    const r=await fetch(API+'/api/ai',{method:'POST',signal:ctl.signal,
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    clearTimeout(k);
+    if(!r.ok)throw new Error('网络不给力');
+    return r.json();
+  }
+}
 window.obAIStart=function(){
   $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="OB.i=1;renderOB()">‹ 返回</button>'+
     '<div class="ob-body"><div class="ob-step">'+
@@ -405,12 +436,8 @@ window.obAIGo=async function(){
   let pi=0;btn.textContent=phases[0];
   clearInterval(aiTick);aiTick=setInterval(()=>{pi=(pi+1)%phases.length;if($('#ai-go'))$('#ai-go').textContent=phases[pi];},2200);
   try{
-    const ctl=new AbortController();
-    const kill=setTimeout(()=>ctl.abort(),20000);
-    const r=await fetch(API+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t}),signal:ctl.signal});
-    clearTimeout(kill);clearInterval(aiTick);
-    if(!r.ok)throw new Error('网络不给力');
-    const d=await r.json();
+    const d=await aiParse(t);
+    clearInterval(aiTick);
     OB.a.goal=d.goal;
     if(d.goal==='race'){OB.a.dist=d.dist||'10k';OB.a.racedate=d.date||f(addD(new Date(),84));}
     OB.a.level=d.level||'5';OB.a.days=d.days||'2-3';
