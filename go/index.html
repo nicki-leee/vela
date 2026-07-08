@@ -368,20 +368,24 @@ function renderOB(){
       if(st.id==='hi'){
         h+='<div class="ob-links">';
         h+='<button class="ob-link" onclick="obRestoreStart()">已有恢复码？找回我的数据</button></div>';
+        h+='<p style="text-align:center;color:#C9C4CC;font-size:11px;margin-top:18px">build 12</p>';
       }
     }
   }
   h+='</div></div></div>';
   $('#ob').innerHTML=h;
   if(st.type==='gen'){
+    let done=false;
+    const fail=e=>{
+      $('#ob').innerHTML='<div class="ob-wrap"><div class="ob-body"><div class="ob-step">'+
+        '<div class="ob-title">哎呀，出了点小问题</div>'+
+        '<p class="ob-sub">'+esc((e&&e.message)||'生成超时')+'。点下面重试，若反复出现请不要用无痕/私密模式打开。</p>'+
+        '<button class="ob-cta" onclick="location.reload()">重试</button></div></div></div>';
+    };
+    const dog=setTimeout(()=>{if(!done)fail(null);},6000);
     setTimeout(()=>{
-      try{finishOB();}
-      catch(e){
-        $('#ob').innerHTML='<div class="ob-wrap"><div class="ob-body"><div class="ob-step">'+
-          '<div class="ob-title">哎呀，出了点小问题</div>'+
-          '<p class="ob-sub">'+esc(e.message||'未知错误')+'。点下面重试，若反复出现请不要用无痕/私密模式打开。</p>'+
-          '<button class="ob-cta" onclick="location.reload()">重试</button></div></div></div>';
-      }
+      try{finishOB();done=true;clearTimeout(dog);}
+      catch(e){done=true;clearTimeout(dog);fail(e);}
     },500);
   }
 }
@@ -403,28 +407,28 @@ function aiSys(){
   const today=f(new Date());
   return '你是女性训练 App「Vela」的教练解析器。用户多为备赛跑者，会描述：最近一次跑步的距离和用时/配速（真实水平）、目标比赛与日期、想提升的方向、每周可训练天数、伤病约束。把描述解析为严格 JSON（不要输出任何其他内容）：\n{\n "goal": "race|fatloss|flex|fitness",\n "dist": "5k|10k|half|full|trail"|null,\n "date": "YYYY-MM-DD"|null,   // 相对时间(如三个月后/10月底)换算成具体日期，今天是 '+today+'\n "level": "3|5|10|15",        // 依据最近跑步表现推档：配速>7:30或只能跑3km给"3"；能跑5km给"5"；能跑10km或5km配速<6:00给"10"；能跑15km+给"15"\n "days": "2-3|4-5|6+",\n "style": "walkrun|run|mix|15|30|45|",\n "notes": "…",                // 把「最近成绩+成绩目标+伤病约束」压缩成一句中文备注，无则空串\n "coach": "…"                 // 温暖专业的教练口吻一句话(40字内)：必须引用她给出的具体数据(配速或目标)\n}';
 }
+/* 绝对超时：不依赖浏览器的 abort 支持，race 到点必拒绝 */
+function withTimeout(p,ms,tag){
+  return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error(tag+'超时'));},ms);})]);
+}
 async function aiParse(text){
   /* 1st: direct DeepSeek (domestic, fast) */
   try{
-    const ctl=new AbortController();const k=setTimeout(()=>ctl.abort(),15000);
-    const r=await fetch('https://api.deepseek.com/chat/completions',{
-      method:'POST',signal:ctl.signal,
+    const r=await withTimeout(fetch('https://api.deepseek.com/chat/completions',{
+      method:'POST',
       headers:{'Content-Type':'application/json',Authorization:'Bearer '+dsk()},
       body:JSON.stringify({model:'deepseek-chat',temperature:0.2,max_tokens:400,
         response_format:{type:'json_object'},
-        messages:[{role:'system',content:aiSys()},{role:'user',content:text}]})});
-    clearTimeout(k);
+        messages:[{role:'system',content:aiSys()},{role:'user',content:text}]})}),15000,'直连');
     if(!r.ok)throw new Error('ds '+r.status);
-    const d=await r.json();
+    const d=await withTimeout(r.json(),8000,'读取');
     return JSON.parse(d.choices[0].message.content);
   }catch(e){
     /* 2nd: overseas relay fallback */
-    const ctl=new AbortController();const k=setTimeout(()=>ctl.abort(),12000);
-    const r=await fetch(API+'/api/ai',{method:'POST',signal:ctl.signal,
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
-    clearTimeout(k);
+    const r=await withTimeout(fetch(API+'/api/ai',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}),10000,'中转');
     if(!r.ok)throw new Error('网络不给力');
-    return r.json();
+    return withTimeout(r.json(),8000,'读取');
   }
 }
 window.obAIStart=function(){
@@ -466,8 +470,10 @@ window.obAIGo=async function(){
       '</div></div></div>';
   }catch(e){
     clearInterval(aiTick);
-    btn.disabled=false;btn.textContent='让教练理解 →';
-    alert('教练暂时联系不上'+(e.name==='AbortError'?'（超时）':'')+'，可以再试一次，或点左上角返回后重新选择。');
+    btn.disabled=false;btn.textContent='再试一次 →';
+    let eb=document.getElementById('ai-err');
+    if(!eb){eb=document.createElement('div');eb.id='ai-err';eb.className='ob-coach';eb.style.color='#A03A55';btn.parentNode.insertBefore(eb,btn);}
+    eb.innerHTML='😣 教练暂时联系不上（'+esc(e.message||'未知')+'）。<br>可以点下面再试一次，或 <a href="javascript:obAIFallback()" style="color:#B04E77;font-weight:700">改用点选回答</a>。';
   }
 };
 window.obAIFallback=function(){
