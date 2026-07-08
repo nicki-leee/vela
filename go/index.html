@@ -150,7 +150,7 @@ function load(){
   try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s;}catch(e){}
   return {v:1,profile:null,checkins:{},planStart:null};
 }
-function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){/* 私密模式等场景：内存态继续可用，仅不持久 */}}
 
 /* ---------- dates ---------- */
 function p(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
@@ -344,7 +344,15 @@ function renderOB(){
   h+='</div></div></div>';
   $('#ob').innerHTML=h;
   if(st.type==='gen'){
-    setTimeout(()=>{finishOB();},1400);
+    setTimeout(()=>{
+      try{finishOB();}
+      catch(e){
+        $('#ob').innerHTML='<div class="ob-wrap"><div class="ob-body"><div class="ob-step">'+
+          '<div class="ob-title">哎呀，出了点小问题</div>'+
+          '<p class="ob-sub">'+esc(e.message||'未知错误')+'。点下面重试，若反复出现请不要用无痕/私密模式打开。</p>'+
+          '<button class="ob-cta" onclick="location.reload()">重试</button></div></div></div>';
+      }
+    },1200);
   }
 }
 window.obNext=function(){OB.i++;renderOB();};
