@@ -221,22 +221,36 @@ function slotFor(ds){
   const g=pr.goal;
   let w=null;
   if(g==='race'){
-    const total=Math.max(4,Math.ceil(dayDiff(p(pr.race.date),p(state.planStart))/7));
-    const taper=pr.race.dist==='full'||pr.race.dist==='half'?2:1;
-    const L0=LEVEL_START[pr.level]||5, peak=DIST_PEAK[pr.race.dist];
+    const races=racesOf(pr);
+    if(!races.length)return null;
+    const A=aRace(races);
+    /* 比赛日本尊 */
+    const tr=races.find(r=>r.date===ds);
+    if(tr)return{t:'race',label:(tr.name||DIST_NAME[tr.dist])+' 比赛日 🏁',detail:'享受它，你准备好了',km:0};
+    if(ds>races[races.length-1].date)return null;
+    /* 每场比赛的前后保护：赛前2天短热身、赛前1天休、赛后2天恢复 */
+    for(const r of races){
+      const before=dayDiff(p(r.date),p(ds));
+      if(before===1)return{t:'rest',label:'赛前休息',detail:'明天是 '+(r.name||DIST_NAME[r.dist])+'，养精蓄锐',km:0};
+      if(before===2)return{t:'easy',label:'赛前激活 3 km',detail:'很轻松地抖开身体，别练累',km:3};
+      const after=dayDiff(p(ds),p(r.date));
+      if(after===1||after===2)return{t:'rest',label:'赛后恢复',detail:'比赛后 48 小时，走路和拉伸最好',km:0};
+    }
+    /* 长距离渐进以最重头的比赛(A赛)倒推 */
+    const total=Math.max(4,Math.ceil(dayDiff(p(A.date),p(state.planStart))/7));
+    const taper=A.dist==='full'||A.dist==='half'?2:1;
+    const L0=LEVEL_START[pr.level]||5, peak=DIST_PEAK[A.dist];
     const build=Math.max(1,total-taper-1);
     let long=Math.min(peak,L0+(peak-L0)*Math.min(1,wi/Math.max(1,build-1)));
     if(wi%4===3&&wi<build-1)long*=0.75;
-    if(wi>=build)long=peak*0.6*(1-(wi-build)*0.25);
+    if(wi>=build)long=peak*0.6*Math.max(0.3,(1-(wi-build)*0.25));
     long=Math.max(3,Math.round(long));
-    if(ds===pr.race.date)return{t:'race',label:DIST_NAME[pr.race.dist]+' 比赛日 🏁',detail:'享受它，你准备好了',km:0};
-    if(ds>pr.race.date)return null;
     const easy=Math.max(3,Math.round(long*0.45));
     if(wd===0)w={t:'long',label:'长距离 '+long+' km',detail:'轻松聊天配速，慢就是对',km:long};
     else if(wd===2)w={t:'easy',label:'轻松跑 '+easy+' km',detail:'能聊天的配速，心率放低',km:easy};
     else if(wd===4&&wi>=2){
-      if(pr.race.dist==='trail')w={t:'hill',label:'坡度跑 '+easy+' km',detail:'6 组上坡 90 秒，下坡走回（护膝）',km:easy};
-      else if(pr.race.dist==='5k'||pr.race.dist==='10k')w={t:'int',label:'间歇跑 '+easy+' km',detail:'6×400m 快 + 慢跑恢复，提最大摄氧量',km:easy};
+      if(A.dist==='trail'||races.some(r=>r.dist==='trail'))w={t:'hill',label:'坡度跑 '+easy+' km',detail:'6 组上坡 90 秒，下坡走回（护膝）',km:easy};
+      else if(A.dist==='5k'||A.dist==='10k')w={t:'int',label:'间歇跑 '+easy+' km',detail:'6×400m 快 + 慢跑恢复，提最大摄氧量',km:easy};
       else w={t:'tempo',label:'节奏跑 '+easy+' km',detail:'中间 '+Math.max(2,Math.round(easy*0.4))+' km 稍快于目标配速',km:easy};
     }
     else if(wd===4)w={t:'easy',label:'轻松跑 '+easy+' km',detail:'打底阶段，全部轻松',km:easy};
@@ -369,7 +383,7 @@ function renderOB(){
       if(st.id==='hi'){
         h+='<div class="ob-links">';
         h+='<button class="ob-link" onclick="obRestoreStart()">已有恢复码？找回我的数据</button></div>';
-        h+='<p style="text-align:center;color:#C9C4CC;font-size:11px;margin-top:18px">build 13</p>';
+        h+='<p style="text-align:center;color:#C9C4CC;font-size:11px;margin-top:18px">build 14</p>';
       }
     }
   }
@@ -406,8 +420,14 @@ const DSKB='NTEyOTJhNzBhZjhjZjE2YmU1NDRkMmU2YmVlYjM1ZDcta3M=';
 function dsk(){return atob(DSKB).split('').reverse().join('');}
 function aiSys(){
   const today=f(new Date());
-  return '你是女性训练 App「Vela」的教练解析器。用户多为备赛跑者，会描述：最近一次跑步的距离和用时/配速（真实水平）、目标比赛与日期、想提升的方向、每周可训练天数、伤病约束。把描述解析为严格 JSON（不要输出任何其他内容）：\n{\n "goal": "race|fatloss|flex|fitness",\n "dist": "5k|10k|half|full|trail"|null,\n "date": "YYYY-MM-DD"|null,   // 相对时间(如三个月后/10月底)换算成具体日期，今天是 '+today+'\n "level": "3|5|10|15",        // 依据最近跑步表现推档：配速>7:30或只能跑3km给"3"；能跑5km给"5"；能跑10km或5km配速<6:00给"10"；能跑15km+给"15"\n "days": "2-3|4-5|6+",\n "style": "walkrun|run|mix|15|30|45|",\n "notes": "…",                // 把「最近成绩+成绩目标+伤病约束」压缩成一句中文备注，无则空串\n "coach": "…"                 // 温暖专业的教练口吻一句话(40字内)：必须引用她给出的具体数据(配速或目标)\n}';
+  return '你是女性训练 App「Vela」的教练解析器。用户是备赛跑者，未来半年可能有多场比赛。把她的描述按固定五个维度完整解析为严格 JSON（不要输出任何其他内容）：\n{\n "recent": "…",   // 维度①当前水平：把最近跑步表现原样完整提取并算出配速，如"8km 56分(7:00/km)"；没提就空串\n "races": [{"name":"深圳半马","dist":"5k|10k|half|full|trail","date":"YYYY-MM-DD"}],\n                   // 维度②赛程表：提到的所有比赛一场不漏全部列出，按时间排序。日期模糊(如11月底)就取该月最后一个周日；只说"半马/全马/越野"没说名字则 name 留空。今天是 '+today+'\n "days": "2-3|4-5|6+",   // 维度③训练频率，未知给"2-3"\n "target": "…",   // 维度④目标：成绩/完赛目标一句话，如"半马安全完赛"或"全马破5"\n "notes": "…",    // 维度⑤约束：伤病、时间限制等一句话，无则空串\n "level": "3|5|10|15",   // 依据 recent 推档：配速>7:30或只能跑3km给"3"；能跑5km给"5"；能跑10km或5km配速<6:00给"10"；能跑15km+给"15"，未知给"5"\n "coach": "…"     // 温暖专业的教练回应(45字内)：必须引用她的具体数据，且如果有多场比赛要点出"共N场"的备赛节奏\n}';
 }
+const RANK={'5k':5,'10k':10,'trail':20,'half':21,'full':42};
+function racesOf(pr){
+  let rs=(pr.races&&pr.races.length)?pr.races:(pr.race&&pr.race.date?[{name:'',dist:pr.race.dist,date:pr.race.date}]:[]);
+  return rs.filter(r=>r&&DIST_PEAK[r.dist]&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')).slice().sort((x,y)=>x.date<y.date?-1:1);
+}
+function aRace(rs){return rs.reduce((m,r)=>RANK[r.dist]>=RANK[m.dist]?r:m,rs[0]);}
 /* 绝对超时：不依赖浏览器的 abort 支持，race 到点必拒绝 */
 function withTimeout(p,ms,tag){
   return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error(tag+'超时'));},ms);})]);
@@ -436,7 +456,7 @@ window.obAIStart=function(){
   $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="OB.i=1;renderOB()">‹ 返回</button>'+
     '<div class="ob-body"><div class="ob-step">'+
     '<div class="ob-title">跟教练说说你的备赛情况</div>'+
-    '<p class="ob-sub">三件事说清楚就行：<b>① 最近一次跑步的距离和用时/配速</b>（反映真实水平）<b>② 目标比赛和日期</b> <b>③ 想提升什么</b>。<br>比如：「最近一次 5 公里跑了 32 分钟。目标 10 月底的半马，想跑进 2 小时 30，顺便把心率降下来。一周能练 4 天。」<br>用键盘上的 🎤 语音听写更快。</p>'+
+    '<p class="ob-sub">三件事说清楚就行：<b>① 最近一次跑步的距离和用时/配速</b>（反映真实水平）<b>② 未来的比赛——有几场说几场</b>（名字+日期，教练会按整个赛程倒推排课）<b>③ 想提升什么</b>。<br>比如：「最近 5 公里跑了 32 分钟。9 月有个城市 10K，10 月底跑成都半马想进 230，12 月上马全马完赛就行。一周能练 4 天。」<br>用键盘上的 🎤 语音听写更快。</p>'+
     '<textarea class="ob-ta" id="ai-text" placeholder="最近一次跑步…目标是…"></textarea>'+
     '<button class="ob-cta" id="ai-go" onclick="obAIGo()">让教练理解 →</button>'+
     '</div></div></div>';
@@ -452,15 +472,22 @@ window.obAIGo=async function(){
   try{
     const d=await aiParse(t);
     clearInterval(aiTick);
-    OB.a.goal=d.goal;
-    if(d.goal==='race'){OB.a.dist=d.dist||'10k';OB.a.racedate=d.date||f(addD(new Date(),84));}
+    OB.a.goal='race';
+    /* normalize races: new schema (races[]) or legacy (dist/date) */
+    let rs=(d.races||[]).filter(r=>r&&DIST_PEAK[r.dist]&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||''));
+    if(!rs.length&&d.dist&&DIST_PEAK[d.dist])rs=[{name:'',dist:d.dist,date:d.date||f(addD(new Date(),84))}];
+    if(!rs.length)rs=[{name:'',dist:'10k',date:f(addD(new Date(),84))}];
+    rs.sort((x,y)=>x.date<y.date?-1:1);
+    OB.a.races=rs;
+    const prim=aRace(rs);
+    OB.a.dist=prim.dist;OB.a.racedate=prim.date;
     OB.a.level=d.level||'5';OB.a.days=d.days||'2-3';
-    if(d.style)OB.a.style=d.style;
-    OB.aiNotes=d.notes||'';
+    OB.aiNotes=[d.target||'',d.notes||''].filter(Boolean).join('；');
     const tags=[];
-    tags.push({race:'比赛 · '+(DIST_NAME[OB.a.dist]||''),fatloss:'减脂塑形',flex:'柔韧与平衡',fitness:'体能提升'}[d.goal]);
-    if(d.goal==='race')tags.push('📅 '+OB.a.racedate);
+    if(d.recent)tags.push('🏃‍♀️ '+d.recent);
+    rs.forEach(r=>tags.push('🏁 '+(r.name||DIST_NAME[r.dist])+' · '+r.date.slice(5).replace('-','/')));
     tags.push('每周 '+OB.a.days+' 天');
+    if(d.target)tags.push('🎯 '+d.target);
     if(d.notes)tags.push('⚠️ '+d.notes);
     $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="obAIStart()">‹ 重新说</button>'+
       '<div class="ob-body"><div class="ob-step">'+
@@ -555,6 +582,7 @@ function finishOB(){
   state.profile={
     goal:a.goal,
     race:a.goal==='race'?{dist:a.dist,date:a.racedate}:null,
+    races:a.goal==='race'?(a.races||[{name:'',dist:a.dist,date:a.racedate}]):[],
     level:a.level||'5',
     style:a.style||'',
     days:a.days||'2-3',
@@ -579,7 +607,12 @@ document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('clic
 
 function goalLabel(){
   const pr=state.profile;
-  if(pr.goal==='race')return DIST_NAME[pr.race.dist]+(pr.race.date?' · T−'+Math.max(0,dayDiff(p(pr.race.date),new Date())):'');
+  if(pr.goal==='race'){
+    const rs=racesOf(pr);
+    if(!rs.length)return '备赛';
+    const next=rs.find(r=>r.date>=todayStr())||rs[rs.length-1];
+    return (next.name||DIST_NAME[next.dist])+' · T−'+Math.max(0,dayDiff(p(next.date),new Date()))+(rs.length>1?' · 共'+rs.length+'场':'');
+  }
   return{fatloss:'减脂塑形',flex:'柔韧与平衡',fitness:'体能提升'}[pr.goal];
 }
 function streak(){
@@ -710,7 +743,9 @@ function renderMe(){
   const pr=state.profile;
   let h='<div class="card"><h2 class="sec">我的计划</h2>';
   h+='<div class="p-row"><span>目标</span><b>'+esc(goalLabel())+'</b></div>';
-  if(pr.goal==='race')h+='<div class="p-row"><span>比赛日</span><b class="num">'+esc(pr.race.date)+'</b></div>';
+  if(pr.goal==='race')racesOf(pr).forEach(r=>{
+    h+='<div class="p-row"><span>🏁 '+esc(r.name||DIST_NAME[r.dist])+'</span><b class="num">'+esc(r.date)+'</b></div>';
+  });
   h+='<div class="p-row"><span>每周训练</span><b>'+esc(pr.days)+' 天</b></div>';
   h+='<div class="p-row"><span>周期排课</span><b>'+(pr.cycle.on?'开启 🌙':'未开启')+'</b></div>';
   if(pr.notes)h+='<div class="p-row"><span>教练备注</span><b>'+esc(pr.notes)+'</b></div>';
@@ -742,7 +777,13 @@ function boot(){
     cloudPull();
   }
 }
-boot();
+try{boot();}
+catch(e){
+  var bm=document.getElementById('boot-msg');
+  if(bm){bm.style.display='flex';
+    bm.innerHTML='<div style="max-width:320px;text-align:center;padding:20px"><b style="color:#B04E77">本地数据和新版本不兼容</b><br><br><code style="font-size:12px;word-break:break-all">'+String(e.message||e)+'</code><br><br><button onclick="localStorage.removeItem(\'vela.go.v1\');location.reload()" style="font:inherit;background:#B04E77;color:#fff;border:none;border-radius:99px;padding:12px 24px;font-weight:700">清除本地数据，重新开始</button></div>';
+  }
+}
 </script>
 </body>
 </html>
