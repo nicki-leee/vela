@@ -134,6 +134,11 @@
 </style>
 </head>
 <body>
+<div id="boot-msg" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#86868B;font-size:15px;background:#FBFBFD">
+  <div style="font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:34px;background:linear-gradient(120deg,#C2426E,#7E2E5C);-webkit-background-clip:text;background-clip:text;color:transparent">Vela</div>
+  <div>正在准备…</div>
+  <noscript>需要开启 JavaScript 才能使用 Vela</noscript>
+</div>
 <div id="ob" hidden></div>
 <div id="app" hidden>
   <header class="top">
@@ -152,6 +157,10 @@
 
 <script>
 'use strict';
+window.onerror=function(msg,src,line){
+  var el=document.getElementById('boot-msg');
+  if(el){el.innerHTML='<div style="max-width:320px;text-align:center;padding:20px"><b style="color:#B04E77">页面出了点问题</b><br><br><code style="font-size:12px;word-break:break-all">'+msg+' @'+line+'</code><br><br>请截图发给 Vela，然后点 <a href="javascript:location.reload()" style="color:#B04E77;font-weight:700">重试</a></div>';el.style.display='flex';}
+};
 const KEY='vela.go.v1';
 let state=load();
 function load(){
@@ -715,6 +724,8 @@ window.restartOB=function(){
 };
 
 function boot(){
+  const bm=document.getElementById('boot-msg');
+  if(bm)bm.style.display='none';
   if(!state.profile){
     $('#app').hidden=true;document.querySelector('nav.tabs').hidden=true;
     $('#ob').hidden=false;renderOB();
