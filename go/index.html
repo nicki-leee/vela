@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Vela · 你的训练教练</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vela">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<style>
+  :root{
+    --ink:#1D1D1F; --sub:#86868B; --line:#E8E8ED; --bg:#FBFBFD;
+    --rose:#B04E77; --rose-deep:#8E3A5F; --rose-bg:#F9EDF3;
+    --grad:linear-gradient(120deg,#C2426E,#7E2E5C);
+    --green:#3E9B72; --green-bg:#E5F3EC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{min-height:100%}
+  body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,'SF Pro Text','PingFang SC',system-ui,sans-serif;
+    font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+  .num{font-variant-numeric:tabular-nums}
+  button{font:inherit;border:none;cursor:pointer;background:none}
+  button:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+
+  /* ---------- onboarding ---------- */
+  #ob{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;overflow-y:auto}
+  .ob-wrap{max-width:440px;width:100%;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) 26px 40px;
+    display:flex;flex-direction:column;min-height:100%}
+  .ob-dots{display:flex;gap:6px;justify-content:center;margin-bottom:8px}
+  .ob-dots i{width:6px;height:6px;border-radius:99px;background:#DDD9DE;transition:all .3s}
+  .ob-dots i.on{background:var(--rose);width:18px}
+  .ob-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}
+  .ob-step{animation:obin .35s ease}
+  @keyframes obin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.ob-step{animation:none}}
+  .ob-mark{width:54px;height:54px;border-radius:14px;margin-bottom:22px;
+    background:var(--grad);position:relative;box-shadow:0 10px 26px rgba(154,58,100,.3)}
+  .ob-mark::after{content:'V';position:absolute;inset:0;display:grid;place-items:center;
+    color:#FFF6F9;font-family:ui-serif,'New York',Georgia,serif;font-style:italic;font-weight:700;font-size:30px}
+  .ob-title{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.25;text-wrap:balance}
+  .ob-sub{color:var(--sub);font-size:16px;margin-top:12px;line-height:1.65}
+  .ob-opts{margin-top:34px;display:flex;flex-direction:column;gap:11px}
+  .ob-opt{display:flex;align-items:center;gap:14px;text-align:left;background:#fff;border:1.5px solid var(--line);
+    border-radius:16px;padding:16px 18px;font-size:17px;font-weight:600;color:var(--ink);transition:transform .1s}
+  .ob-opt:active{transform:scale(.98)}
+  .ob-opt .e{font-size:22px}
+  .ob-opt small{display:block;font-weight:400;color:var(--sub);font-size:13.5px;margin-top:1px}
+  .ob-date{margin-top:34px}
+  .ob-date input{width:100%;font:inherit;font-size:18px;font-weight:600;padding:16px;border:1.5px solid var(--line);
+    border-radius:16px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
+  .ob-date input::-webkit-date-and-time-value{text-align:left;margin:0}
+  .ob-cta{margin-top:26px;width:100%;background:var(--grad);color:#fff;font-size:17px;font-weight:700;
+    padding:17px;border-radius:99px;box-shadow:0 10px 26px rgba(154,58,100,.28)}
+  .ob-back{align-self:flex-start;color:var(--sub);font-size:15px;padding:8px 0;margin-bottom:4px}
+  .ob-spin{margin:0 auto;width:46px;height:46px;border-radius:50%;border:3.5px solid #EFDDE7;border-top-color:var(--rose);
+    animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .ob-gen{text-align:center}
+  .ob-gen p{margin-top:22px;color:var(--sub)}
+
+  /* ---------- app ---------- */
+  #app{max-width:520px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom))}
+  .view{display:none}.view.on{display:block;animation:obin .25s ease}
+  header.top{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 18px}
+  .wordmark{font-family:ui-serif,'New York',Georgia,serif;font-style:italic;font-weight:700;font-size:26px;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .h-chip{font-size:12.5px;font-weight:700;color:var(--sub);background:#fff;border:1px solid var(--line);
+    border-radius:99px;padding:5px 13px}
+  .h-chip b{color:var(--rose)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:14px;
+    box-shadow:0 6px 22px rgba(60,40,60,.05)}
+  .t-date{font-size:13px;font-weight:600;color:var(--sub)}
+  .t-phase{display:inline-block;margin-left:8px;font-size:11.5px;font-weight:700;color:var(--rose);
+    background:var(--rose-bg);border-radius:99px;padding:2px 10px}
+  .t-big{font-size:38px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-top:14px;text-wrap:balance}
+  .t-detail{color:var(--sub);font-size:15px;margin-top:10px;line-height:1.7}
+  .t-note{margin-top:14px;background:var(--rose-bg);border-radius:14px;padding:12px 15px;font-size:13.5px;
+    color:#7A4A60;line-height:1.65}
+  .t-btns{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+  .b-main{flex:1;background:var(--grad);color:#fff;font-weight:700;font-size:16px;padding:15px;border-radius:99px;
+    box-shadow:0 8px 22px rgba(154,58,100,.25)}
+  .b-soft{background:var(--rose-bg);color:var(--rose-deep);font-weight:700;font-size:14px;padding:13px 20px;border-radius:99px}
+  .done-line{display:flex;align-items:center;gap:10px;margin-top:18px;color:var(--green);font-weight:800;font-size:16px}
+  .streak{color:#C58A2A;font-weight:800;font-size:13.5px;margin-top:10px}
+  .feel{display:flex;gap:8px;margin-top:18px;align-items:center;flex-wrap:wrap}
+  .feel span{font-size:12.5px;color:var(--sub);font-weight:600}
+  .feel button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--ink)}
+  .feel button.on{border-color:var(--rose);background:var(--rose-bg);color:var(--rose-deep)}
+  h2.sec{font-size:12px;font-weight:800;letter-spacing:.18em;color:var(--sub);margin:2px 0 14px;text-transform:uppercase}
+  .week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .ws{ text-align:center;background:#fff;border:1.5px solid var(--line);border-radius:13px;padding:9px 2px;font-size:10.5px;color:var(--sub);font-weight:600}
+  .ws .d{font-weight:700;font-size:11.5px;color:var(--ink)}
+  .ws .k{font-weight:800;font-size:13px;color:var(--ink);margin-top:2px}
+  .ws.today{border-color:var(--rose)}
+  .ws.done{background:var(--rose);border-color:var(--rose);color:#F7DEE9}
+  .ws.done .d,.ws.done .k{color:#fff}
+  .day-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:15px}
+  .day-row:first-of-type{border-top:none}
+  .day-row .dt{width:74px;color:var(--sub);flex-shrink:0;font-weight:600;font-size:13px}
+  .day-row .nm{flex:1;font-weight:700}
+  .day-row .nm small{display:block;font-weight:400;color:var(--sub);font-size:12.5px}
+  .day-row.today-row{background:var(--rose-bg);margin:0 -10px;padding:12px 10px;border-radius:14px;border-top:none}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
+  .cal .wdh{text-align:center;font-size:10.5px;font-weight:700;color:var(--sub);padding:4px 0}
+  .cell{min-height:50px;border-radius:12px;padding:5px 2px;text-align:center;background:#fff;border:1.5px solid transparent;font-size:10px;color:var(--sub)}
+  .cell .dn{font-size:11px;font-weight:700;color:var(--sub)}
+  .cell .ind{font-weight:800;font-size:12px;color:var(--rose);margin-top:2px}
+  .cell.today{border-color:var(--rose)}
+  .cell.done{background:var(--grad);color:#F7DEE9;border-color:transparent}
+  .cell.done .dn,.cell.done .ind{color:#fff}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px}
+  .cal-title{font-size:18px;font-weight:700}
+  .cal-nav button{background:#fff;border:1px solid var(--line);border-radius:99px;width:32px;height:32px;font-size:14px;color:var(--sub)}
+  .hint{font-size:12.5px;color:var(--sub);margin-top:10px;line-height:1.7}
+  .p-row{display:flex;justify-content:space-between;padding:13px 0;border-top:1px solid var(--line);font-size:15px}
+  .p-row:first-of-type{border-top:none}
+  .p-row b{font-weight:700}
+  .p-row span{color:var(--sub)}
+  nav.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));z-index:5;
+    width:min(420px,calc(100% - 32px));background:rgba(255,255,255,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--line);border-radius:99px;display:flex;gap:2px;padding:6px;box-shadow:0 12px 32px rgba(60,40,60,.14)}
+  nav.tabs button{flex:1;color:var(--sub);font-size:14px;font-weight:700;padding:12px 0;border-radius:99px}
+  nav.tabs button.on{color:#fff;background:var(--grad)}
+</style>
+</head>
+<body>
+<div id="ob" hidden></div>
+<div id="app" hidden>
+  <header class="top">
+    <span class="wordmark">Vela</span>
+    <span class="h-chip" id="h-goal"></span>
+  </header>
+  <section class="view" id="view-today"></section>
+  <section class="view" id="view-plan"></section>
+  <section class="view" id="view-me"></section>
+</div>
+<nav class="tabs" hidden aria-label="主导航">
+  <button data-v="today">今天</button>
+  <button data-v="plan">课表</button>
+  <button data-v="me">我的</button>
+</nav>
+
+<script>
+'use strict';
+const KEY='vela.go.v1';
+let state=load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s;}catch(e){}
+  return {v:1,profile:null,checkins:{},planStart:null};
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+
+/* ---------- dates ---------- */
+function p(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
+function f(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function addD(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function addM(d,n){return new Date(d.getFullYear(),d.getMonth()+n,1);}
+function monday(d){const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+function dayDiff(a,b){return Math.round((p(f(a))-p(f(b)))/864e5);}
+function todayStr(){return f(new Date());}
+const WD=['日','一','二','三','四','五','六'];
+const $=s=>document.querySelector(s);
+function esc(x){return String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- cycle ---------- */
+function phaseDay(ds){
+  const c=state.profile&&state.profile.cycle;
+  if(!c||!c.on||!c.last)return null;
+  const diff=dayDiff(p(ds),p(c.last));
+  if(diff<0)return null;
+  return (diff%(c.len||28))+1;
+}
+function phaseInfo(ds){
+  const d=phaseDay(ds);
+  if(d==null)return null;
+  if(d<=2)return{d,key:'mens1',name:'经期第'+d+'天',emoji:'🩸'};
+  if(d<=5)return{d,key:'mens2',name:'经期第'+d+'天',emoji:'🩸'};
+  if(d<=13)return{d,key:'foll',name:'卵泡期',emoji:'🌱'};
+  if(d<=16)return{d,key:'ovul',name:'排卵期',emoji:'🌕'};
+  if(d>=(state.profile.cycle.len||28)-3)return{d,key:'lute2',name:'黄体期后段',emoji:'🌘'};
+  return{d,key:'lute',name:'黄体期',emoji:'🌙'};
+}
+
+/* ---------- plan engines ---------- */
+const DIST_PEAK={'5k':8,'10k':12,'half':18,'full':30,'trail':20};
+const DIST_NAME={'5k':'5K','10k':'10K','half':'半程马拉松','full':'全程马拉松','trail':'越野跑'};
+const LEVEL_START={'3':3,'5':5,'10':8,'15':12};
+function runDays(n){return n==='2-3'?[2,4,0]:n==='4-5'?[2,4,6,0]:[2,3,4,6,0];}
+function weekIdx(ds){return Math.floor(dayDiff(p(ds),p(state.planStart))/7);}
+
+function slotFor(ds){
+  const pr=state.profile;
+  if(!pr)return null;
+  const wd=p(ds).getDay();
+  const wi=weekIdx(ds);
+  const days=runDays(pr.days);
+  const g=pr.goal;
+  let w=null;
+  if(g==='race'){
+    const total=Math.max(4,Math.ceil(dayDiff(p(pr.race.date),p(state.planStart))/7));
+    const taper=pr.race.dist==='full'||pr.race.dist==='half'?2:1;
+    const L0=LEVEL_START[pr.level]||5, peak=DIST_PEAK[pr.race.dist];
+    const build=Math.max(1,total-taper-1);
+    let long=Math.min(peak,L0+(peak-L0)*Math.min(1,wi/Math.max(1,build-1)));
+    if(wi%4===3&&wi<build-1)long*=0.75;
+    if(wi>=build)long=peak*0.6*(1-(wi-build)*0.25);
+    long=Math.max(3,Math.round(long));
+    if(ds===pr.race.date)return{t:'race',label:DIST_NAME[pr.race.dist]+' 比赛日 🏁',detail:'享受它，你准备好了',km:0};
+    if(ds>pr.race.date)return null;
+    const easy=Math.max(3,Math.round(long*0.45));
+    if(wd===0)w={t:'long',label:'长距离 '+long+' km',detail:'轻松聊天配速，慢就是对',km:long};
+    else if(wd===2)w={t:'easy',label:'轻松跑 '+easy+' km',detail:'能聊天的配速，心率放低',km:easy};
+    else if(wd===4&&wi>=2){
+      if(pr.race.dist==='trail')w={t:'hill',label:'坡度跑 '+easy+' km',detail:'6 组上坡 90 秒，下坡走回（护膝）',km:easy};
+      else if(pr.race.dist==='5k'||pr.race.dist==='10k')w={t:'int',label:'间歇跑 '+easy+' km',detail:'6×400m 快 + 慢跑恢复，提最大摄氧量',km:easy};
+      else w={t:'tempo',label:'节奏跑 '+easy+' km',detail:'中间 '+Math.max(2,Math.round(easy*0.4))+' km 稍快于目标配速',km:easy};
+    }
+    else if(wd===4)w={t:'easy',label:'轻松跑 '+easy+' km',detail:'打底阶段，全部轻松',km:easy};
+    else if(days.includes(wd)&&wd===6)w={t:'easy',label:'轻松跑 '+Math.max(3,Math.round(long*0.35))+' km',detail:'长距离前一天，短而轻',km:Math.max(3,Math.round(long*0.35))};
+    else if(days.includes(wd))w={t:'strength',label:'力量 30 分钟',detail:'深蹲 · 臀桥 · 平板支撑 · 提踵，各 3 组',min:30};
+  }else if(g==='fatloss'){
+    const base=Math.min(55,30+wi*2);
+    const menu=pr.style==='walkrun'
+      ?[{t:'wr',label:'走跑结合 '+base+' 分钟',detail:'快走 3 分钟 + 慢跑 2 分钟，循环',min:base},
+        {t:'strength',label:'力量循环 30 分钟',detail:'深蹲 · 弓步 · 俯卧撑（跪姿可）· 平板，各 3 组',min:30},
+        {t:'walk',label:'快走 45 分钟',detail:'微喘但能说话的强度',min:45}]
+      :pr.style==='run'
+      ?[{t:'easy',label:'轻松跑 '+Math.round(base/8)+' km',detail:'能聊天的配速',km:Math.round(base/8)},
+        {t:'strength',label:'力量循环 30 分钟',detail:'下肢 + 核心，各 3 组',min:30},
+        {t:'wr',label:'变速走跑 '+base+' 分钟',detail:'1 分钟快 + 2 分钟慢，循环',min:base}]
+      :[{t:'strength',label:'力量循环 35 分钟',detail:'全身大肌群，重量以 12 次力竭为准',min:35},
+        {t:'cardio',label:'有氧 '+base+' 分钟',detail:'跑步机 / 单车 / 椭圆机任选，中低强度',min:base},
+        {t:'core',label:'核心 + 快走 40 分钟',detail:'核心 15 分钟 + 快走 25 分钟',min:40}];
+    const idx=days.indexOf(wd);
+    if(idx>=0)w=menu[idx%menu.length];
+  }else if(g==='flex'){
+    const mins=pr.style==='45'?45:pr.style==='15'?15:30;
+    const menu=[
+      {t:'flow',label:'流动瑜伽 '+mins+' 分钟',detail:'呼吸带动身体，慢下来',min:mins},
+      {t:'pilates',label:'核心普拉提 '+mins+' 分钟',detail:'骨盆稳定 + 深层核心',min:mins},
+      {t:'hip',label:'髋与下背释放 '+mins+' 分钟',detail:'久坐者的解药',min:mins},
+      {t:'stretch',label:'全身拉伸 '+Math.min(mins,30)+' 分钟',detail:'每个动作停留 45 秒',min:Math.min(mins,30)}];
+    const idx=days.indexOf(wd);
+    if(idx>=0)w=menu[(idx+wi)%menu.length];
+  }else{
+    const menu=[
+      {t:'strength',label:'全身力量 35 分钟',detail:'深蹲 · 硬拉 · 推 · 拉，各 3-4 组',min:35},
+      {t:'cardio',label:'轻松有氧 30 分钟',detail:'跑 / 骑 / 划船任选',min:30},
+      {t:'core',label:'核心 + 臀腿 30 分钟',detail:'平板家族 + 臀桥 + 箭步蹲',min:30},
+      {t:'outdoor',label:'户外快走或慢跑 40 分钟',detail:'晒晒太阳，动起来就赢',min:40}];
+    const idx=days.indexOf(wd);
+    if(idx>=0)w=menu[(idx+wi)%menu.length];
+  }
+  /* cycle overlay: day 1-2 rest, key session shifts a day earlier if possible */
+  const ph=phaseInfo(ds);
+  if(ph&&ph.key==='mens1'&&w&&w.t!=='race')
+    return{t:'rest',label:'休息日 🌙',detail:'经期第 '+ph.d+' 天，休息写在课表里，不算偷懒',km:0};
+  return w;
+}
+function planFor(ds){
+  const w=slotFor(ds);
+  if(w)return w;
+  const ph=phaseInfo(ds);
+  if(ph&&ph.key==='mens1')
+    return{t:'rest',label:'休息日 🌙',detail:'经期第 '+ph.d+' 天，休息写在课表里，不算偷懒',km:0};
+  return{t:'rest',label:'休息日',detail:'恢复也是训练的一部分，可以散步或拉伸',km:0};
+}
+
+/* ---------- onboarding ---------- */
+const OB={i:0,a:{}};
+function obSteps(){
+  const a=OB.a;
+  const steps=[
+    {id:'hi',type:'info',title:'嗨，我是 Vela，你的训练教练。',
+     sub:'回答几个小问题（全程点选，不用打字），我会立刻为你生成一份专属训练计划，并且每天陪你调整它。',cta:'开始'},
+    {id:'goal',type:'chips',title:'最近，你最想达成什么？',opts:[
+      {v:'race',e:'🏁',l:'完成一场比赛',s:'5K 到全马、越野跑'},
+      {v:'fatloss',e:'🔥',l:'减脂塑形',s:'瘦下来，线条紧一点'},
+      {v:'flex',e:'🧘‍♀️',l:'柔韧与平衡',s:'瑜伽、普拉提、拉伸'},
+      {v:'fitness',e:'💪',l:'更强的体能',s:'综合力量与耐力'}]},
+  ];
+  if(a.goal==='race'){
+    steps.push({id:'dist',type:'chips',title:'目标是什么距离？',opts:[
+      {v:'5k',e:'⚡️',l:'5K'},{v:'10k',e:'🏃‍♀️',l:'10K'},
+      {v:'half',e:'🎽',l:'半程马拉松',s:'21.1 km'},{v:'full',e:'🏅',l:'全程马拉松',s:'42.2 km'},
+      {v:'trail',e:'⛰️',l:'越野跑'}]});
+    steps.push({id:'racedate',type:'date',title:'比赛大概在什么时候？',sub:'没定的话选一个大概的日子，之后随时能改。',cta:'就这天'});
+    steps.push({id:'level',type:'chips',title:'现在能轻松连续跑多远？',sub:'凭感觉选，不用精确。',opts:[
+      {v:'3',l:'3 km 以内',e:'🌱'},{v:'5',l:'5 km 左右',e:'🙂'},
+      {v:'10',l:'10 km 左右',e:'😎'},{v:'15',l:'15 km 以上',e:'🚀'}]});
+  }else if(a.goal==='fatloss'){
+    steps.push({id:'style',type:'chips',title:'你更喜欢哪种动法？',opts:[
+      {v:'walkrun',e:'🚶‍♀️',l:'走跑结合',s:'温和起步，不喘不累'},
+      {v:'run',e:'🏃‍♀️',l:'以跑为主',s:'有一定跑步基础'},
+      {v:'mix',e:'🏋️‍♀️',l:'力量 + 有氧',s:'练线条也练心肺'}]});
+  }else if(a.goal==='flex'){
+    steps.push({id:'style',type:'chips',title:'每次想练多久？',opts:[
+      {v:'15',e:'☕️',l:'15 分钟',s:'碎片时间'},
+      {v:'30',e:'🌿',l:'30 分钟',s:'刚刚好'},
+      {v:'45',e:'🌊',l:'45 分钟',s:'完整一节课'}]});
+  }
+  steps.push({id:'days',type:'chips',title:'每周能安排几天训练？',sub:'诚实一点，可持续比雄心重要。',opts:[
+    {v:'2-3',e:'🌤',l:'2-3 天'},{v:'4-5',e:'⛅️',l:'4-5 天'},{v:'6+',e:'🌞',l:'尽量每天'}]});
+  steps.push({id:'cycle',type:'chips',title:'要按月经周期智能排课吗？',sub:'经期前两天自动休息，状态黄金期安排关键训练。数据只存在你自己的手机里。',opts:[
+    {v:'on',e:'🌙',l:'好，开启',s:'推荐女生开启'},{v:'off',e:'⏭️',l:'跳过'}]});
+  if(a.cycle==='on'){
+    steps.push({id:'cyclelast',type:'date',title:'上次月经第一天大概是哪天？',sub:'记不清就选个大概，之后每次来的时候点一下就会自动校准。',cta:'好了'});
+    steps.push({id:'cyclelen',type:'chips',title:'周期大概多少天？',opts:[
+      {v:'26',l:'26 天'},{v:'28',l:'28 天',s:'不确定就选这个'},{v:'30',l:'30 天'},{v:'32',l:'32 天'}]});
+  }
+  steps.push({id:'gen',type:'gen',title:'正在为你生成计划…'});
+  return steps;
+}
+function renderOB(){
+  const steps=obSteps();
+  if(OB.i>=steps.length)return;
+  const st=steps[OB.i];
+  const total=steps.length;
+  let h='<div class="ob-wrap">';
+  h+='<div class="ob-dots">'+steps.map((s,i)=>'<i class="'+(i<=OB.i?'on':'')+'"></i>').join('')+'</div>';
+  if(OB.i>0&&st.type!=='gen')h+='<button class="ob-back" onclick="obBack()">‹ 上一步</button>';
+  h+='<div class="ob-body"><div class="ob-step">';
+  if(st.type==='gen'){
+    h+='<div class="ob-gen"><div class="ob-spin"></div><p>'+esc(st.title)+'</p></div>';
+  }else{
+    if(OB.i===0)h+='<div class="ob-mark"></div>';
+    h+='<div class="ob-title">'+esc(st.title)+'</div>';
+    if(st.sub)h+='<p class="ob-sub">'+esc(st.sub)+'</p>';
+    if(st.type==='chips'){
+      h+='<div class="ob-opts">'+st.opts.map(o=>
+        '<button class="ob-opt" onclick="obPick(\''+st.id+'\',\''+o.v+'\')">'+
+        (o.e?'<span class="e">'+o.e+'</span>':'')+
+        '<span>'+esc(o.l)+(o.s?'<small>'+esc(o.s)+'</small>':'')+'</span></button>').join('')+'</div>';
+    }else if(st.type==='date'){
+      const def=st.id==='racedate'?f(addD(new Date(),84)):f(addD(new Date(),-7));
+      h+='<div class="ob-date"><input type="date" id="ob-date" value="'+def+'"></div>';
+      h+='<button class="ob-cta" onclick="obDate(\''+st.id+'\')">'+esc(st.cta)+'</button>';
+    }else{
+      h+='<button class="ob-cta" onclick="obNext()">'+esc(st.cta)+'</button>';
+    }
+  }
+  h+='</div></div></div>';
+  $('#ob').innerHTML=h;
+  if(st.type==='gen'){
+    setTimeout(()=>{finishOB();},1400);
+  }
+}
+window.obNext=function(){OB.i++;renderOB();};
+window.obBack=function(){OB.i=Math.max(0,OB.i-1);renderOB();};
+window.obPick=function(id,v){OB.a[id]=v;OB.i++;renderOB();};
+window.obDate=function(id){OB.a[id]=$('#ob-date').value||f(new Date());OB.i++;renderOB();};
+function finishOB(){
+  const a=OB.a;
+  state.profile={
+    goal:a.goal,
+    race:a.goal==='race'?{dist:a.dist,date:a.racedate}:null,
+    level:a.level||'5',
+    style:a.style||'',
+    days:a.days||'2-3',
+    cycle:{on:a.cycle==='on',last:a.cyclelast||'',len:Number(a.cyclelen)||28}
+  };
+  state.planStart=f(monday(new Date()));
+  save();
+  boot();
+}
+
+/* ---------- app ---------- */
+let curView='today',feelToday=null,calCur=null;
+function switchView(v){curView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.toggle('on',el.id==='view-'+v));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  window.scrollTo(0,0);
+}
+window.switchView=switchView;
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
+
+function goalLabel(){
+  const pr=state.profile;
+  if(pr.goal==='race')return DIST_NAME[pr.race.dist]+(pr.race.date?' · T−'+Math.max(0,dayDiff(p(pr.race.date),new Date())):'');
+  return{fatloss:'减脂塑形',flex:'柔韧与平衡',fitness:'体能提升'}[pr.goal];
+}
+function streak(){
+  let n=0,d=p(todayStr());
+  if(!(state.checkins[todayStr()]&&state.checkins[todayStr()].done))d=addD(d,-1);
+  while(true){const c=state.checkins[f(d)];if(c&&c.done){n++;d=addD(d,-1);}else break;}
+  return n;
+}
+function celebrate(){
+  try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;}catch(e){}
+  let cv=document.getElementById('cf');
+  if(!cv){cv=document.createElement('canvas');cv.id='cf';cv.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99';document.body.appendChild(cv);}
+  cv.width=innerWidth;cv.height=innerHeight;
+  const ctx=cv.getContext('2d');
+  const cols=['#C2426E','#F2C9DA','#7E2E5C','#FFF6F9','#E8A3B8'];
+  const ps=Array.from({length:90},()=>({x:cv.width/2,y:cv.height*0.4,vx:(Math.random()-0.5)*11,vy:-(Math.random()*9+4),r:Math.random()*5+3,c:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*6}));
+  let t0=null;
+  (function step(ts){
+    if(!t0)t0=ts;const el=ts-t0;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.globalAlpha=Math.max(0,1-el/1400);
+    ps.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.vy+=0.26;q.rot+=0.1;
+      ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.rot);ctx.fillStyle=q.c;ctx.fillRect(-q.r,-q.r/2,q.r*2,q.r);ctx.restore();});
+    ctx.globalAlpha=1;
+    if(el<1500)requestAnimationFrame(step);else ctx.clearRect(0,0,cv.width,cv.height);
+  })(performance.now());
+}
+
+function renderToday(){
+  const ds=todayStr();
+  const d=p(ds);
+  const ci=state.checkins[ds];
+  let w=planFor(ds);
+  const ph=phaseInfo(ds);
+  let note='';
+  if(feelToday==='bad'&&w.t!=='rest'){
+    note='今天状态不行就直接休息，或者只做原计划的一半。可持续 > 完美。';
+  }else if(ph&&ph.key==='foll'&&(w.t==='long'||w.t==='int'||w.t==='tempo'||w.t==='hill')){
+    note='卵泡期是身体状态的黄金窗口，今天的课值得认真完成。';
+  }else if(ph&&ph.key==='lute2'){
+    note='黄体期后段，体感偏沉是正常的，允许自己慢一点。';
+  }
+  let h='<div class="card">';
+  h+='<span class="t-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日 · 周'+WD[d.getDay()]+'</span>';
+  if(ph)h+='<span class="t-phase">'+ph.emoji+' '+esc(ph.name)+'</span>';
+  h+='<div class="t-big">'+esc(w.label)+'</div>';
+  h+='<div class="t-detail">'+esc(w.detail)+'</div>';
+  if(note)h+='<div class="t-note">'+esc(note)+'</div>';
+  if(ci&&ci.done){
+    h+='<div class="done-line">✓ 今天完成了，漂亮</div>';
+    if(streak()>1)h+='<div class="streak">🔥 连续 '+streak()+' 天</div>';
+  }else{
+    h+='<div class="t-btns"><button class="b-main" onclick="markDone()">'+(w.t==='rest'?'✓ 今天好好休息':'✓ 完成今日')+'</button></div>';
+    h+='<div class="feel"><span>今天感觉：</span>'+
+      [['good','很好'],['ok','一般'],['bad','不太行']].map(x=>
+      '<button class="'+(feelToday===x[0]?'on':'')+'" onclick="setFeel(\''+x[0]+'\')">'+x[1]+'</button>').join('')+'</div>';
+  }
+  if(ph&&state.profile.cycle.on){
+    h+='<div class="t-btns" style="margin-top:16px"><button class="b-soft" onclick="periodToday()">🩸 今天月经来了（第 1 天）</button></div>';
+  }
+  h+='</div>';
+  /* week strip */
+  h+='<div class="card"><h2 class="sec">本周</h2><div class="week-strip">';
+  const mon=monday(d);
+  for(let i=0;i<7;i++){
+    const k=f(addD(mon,i)),dd=addD(mon,i);
+    const ww=planFor(k);
+    const done=state.checkins[k]&&state.checkins[k].done;
+    h+='<div class="ws'+(k===ds?' today':'')+(done?' done':'')+'">';
+    h+='<div class="d">'+WD[dd.getDay()]+'</div>';
+    h+='<div class="k num">'+(done?'✓':ww.km?ww.km:'')+(!done&&!ww.km&&ww.min?ww.min+"'":'')+(!done&&ww.t==='rest'?'休':'')+'</div>';
+    h+='</div>';
+  }
+  h+='</div></div>';
+  $('#view-today').innerHTML=h;
+  $('#h-goal').innerHTML='目标 <b>'+esc(goalLabel())+'</b>';
+}
+window.setFeel=function(v){feelToday=(feelToday===v?null:v);renderToday();};
+window.markDone=function(){
+  const ds=todayStr();
+  const w=planFor(ds);
+  state.checkins[ds]={done:true,label:w.label,km:w.km||0};
+  save();celebrate();renderToday();renderPlan();
+};
+window.periodToday=function(){
+  state.profile.cycle.last=todayStr();
+  save();renderToday();renderPlan();
+};
+
+function renderPlan(){
+  const ds=todayStr();
+  if(!calCur)calCur=new Date(p(ds).getFullYear(),p(ds).getMonth(),1);
+  let h='<div class="card"><h2 class="sec">本周安排</h2>';
+  const mon=monday(p(ds));
+  for(let i=0;i<7;i++){
+    const k=f(addD(mon,i)),dd=addD(mon,i);
+    const w=planFor(k);
+    const done=state.checkins[k]&&state.checkins[k].done;
+    h+='<div class="day-row'+(k===ds?' today-row':'')+'">';
+    h+='<span class="dt">'+k.slice(5).replace('-','/')+' 周'+WD[dd.getDay()]+'</span>';
+    h+='<span class="nm">'+(done?'✓ ':'')+esc(w.label)+'<small>'+esc(w.detail)+'</small></span></div>';
+  }
+  h+='</div>';
+  /* month */
+  const y=calCur.getFullYear(),m=calCur.getMonth();
+  h+='<div class="card"><div class="cal-head"><span class="cal-title">'+y+' 年 '+(m+1)+' 月</span>';
+  h+='<span class="cal-nav"><button onclick="calNav(-1)">‹</button> <button onclick="calNav(1)">›</button></span></div>';
+  h+='<div class="cal">';
+  ['一','二','三','四','五','六','日'].forEach(x=>h+='<div class="wdh">'+x+'</div>');
+  const first=new Date(y,m,1),startIdx=(first.getDay()+6)%7,daysIn=new Date(y,m+1,0).getDate();
+  for(let i=0;i<startIdx;i++)h+='<div></div>';
+  for(let dd=1;dd<=daysIn;dd++){
+    const k=f(new Date(y,m,dd));
+    const w=planFor(k);
+    const done=state.checkins[k]&&state.checkins[k].done;
+    const race=w.t==='race';
+    h+='<div class="cell'+(k===ds?' today':'')+(done?' done':'')+'">';
+    h+='<div class="dn num">'+dd+'</div>';
+    h+='<div class="ind">'+(done?'✓':race?'🏁':w.km?w.km:w.min?w.min+"'":'·')+'</div>';
+    h+='</div>';
+  }
+  h+='</div><p class="hint">数字 = 公里数或分钟数 · 玫瑰色 = 已完成 · 🏁 = 比赛日'+(state.profile.cycle.on?' · 经期前两天自动排休':'')+'</p></div>';
+  $('#view-plan').innerHTML=h;
+}
+window.calNav=function(n){calCur=addM(calCur,n);renderPlan();};
+
+function renderMe(){
+  const pr=state.profile;
+  let h='<div class="card"><h2 class="sec">我的计划</h2>';
+  h+='<div class="p-row"><span>目标</span><b>'+esc(goalLabel())+'</b></div>';
+  if(pr.goal==='race')h+='<div class="p-row"><span>比赛日</span><b class="num">'+esc(pr.race.date)+'</b></div>';
+  h+='<div class="p-row"><span>每周训练</span><b>'+esc(pr.days)+' 天</b></div>';
+  h+='<div class="p-row"><span>周期排课</span><b>'+(pr.cycle.on?'开启 🌙':'未开启')+'</b></div>';
+  h+='<div class="t-btns" style="margin-top:18px"><button class="b-main" onclick="restartOB()">重新设定目标</button></div>';
+  h+='<p class="hint">重新设定会生成新计划，已完成的打卡记录会保留。所有数据只存在这台设备的浏览器里。</p></div>';
+  h+='<div class="card"><h2 class="sec">关于 Vela</h2><p class="hint" style="margin-top:0">Vela 相信：训练计划应该围着你的生活转，而不是反过来。每天完成后点一下 ✓，课表会自动跟着你的节奏走。<br><br>由 Vela 引擎驱动 · 月夜跑者 🌙</p></div>';
+  $('#view-me').innerHTML=h;
+}
+window.restartOB=function(){
+  state.profile=null;save();
+  OB.i=0;OB.a={};
+  boot();
+};
+
+function boot(){
+  if(!state.profile){
+    $('#app').hidden=true;document.querySelector('nav.tabs').hidden=true;
+    $('#ob').hidden=false;renderOB();
+  }else{
+    $('#ob').hidden=true;$('#app').hidden=false;document.querySelector('nav.tabs').hidden=false;
+    renderToday();renderPlan();renderMe();switchView('today');
+  }
+}
+boot();
+</script>
+</body>
+</html>
