@@ -286,14 +286,18 @@ function obSteps(){
   const a=OB.a;
   const steps=[
     {id:'hi',type:'info',title:'嗨，我是 Vela，你的训练教练。',
-     sub:'回答几个小问题（全程点选，不用打字），我会立刻为你生成一份专属训练计划，并且每天陪你调整它。',cta:'开始'},
-    {id:'goal',type:'chips',title:'最近，你最想达成什么？',opts:[
-      {v:'race',e:'🏁',l:'完成一场比赛',s:'5K 到全马、越野跑'},
+     sub:'回答几个小问题，我会立刻为你生成一份专属训练计划，并且每天陪你调整它。',cta:'开始'},
+    {id:'mode',type:'chips',title:'你现在在备赛吗？',opts:[
+      {v:'race',e:'🏁',l:'在备赛',s:'有明确的比赛或成绩目标 → 直接告诉 AI 教练'},
+      {v:'no',e:'🌿',l:'没有',s:'想减脂、练柔韧、或提升体能'}]},
+  ];
+  if(a.mode==='no'){
+    steps.push({id:'goal',type:'chips',title:'想通过运动获得什么？',opts:[
       {v:'fatloss',e:'🔥',l:'减脂塑形',s:'瘦下来，线条紧一点'},
       {v:'flex',e:'🧘‍♀️',l:'柔韧与平衡',s:'瑜伽、普拉提、拉伸'},
-      {v:'fitness',e:'💪',l:'更强的体能',s:'综合力量与耐力'}]},
-  ];
-  if(a.goal==='race'){
+      {v:'fitness',e:'💪',l:'更强的体能',s:'综合力量与耐力'}]});
+  }
+  if(a.goal==='race'&&a.aiFail){
     steps.push({id:'dist',type:'chips',title:'目标是什么距离？',opts:[
       {v:'5k',e:'⚡️',l:'5K'},{v:'10k',e:'🏃‍♀️',l:'10K'},
       {v:'half',e:'🎽',l:'半程马拉松',s:'21.1 km'},{v:'full',e:'🏅',l:'全程马拉松',s:'42.2 km'},
@@ -302,7 +306,8 @@ function obSteps(){
     steps.push({id:'level',type:'chips',title:'现在能轻松连续跑多远？',sub:'凭感觉选，不用精确。',opts:[
       {v:'3',l:'3 km 以内',e:'🌱'},{v:'5',l:'5 km 左右',e:'🙂'},
       {v:'10',l:'10 km 左右',e:'😎'},{v:'15',l:'15 km 以上',e:'🚀'}]});
-  }else if(a.goal==='fatloss'){
+  }
+  if(a.goal==='fatloss'){
     steps.push({id:'style',type:'chips',title:'你更喜欢哪种动法？',opts:[
       {v:'walkrun',e:'🚶‍♀️',l:'走跑结合',s:'温和起步，不喘不累'},
       {v:'run',e:'🏃‍♀️',l:'以跑为主',s:'有一定跑步基础'},
@@ -353,7 +358,6 @@ function renderOB(){
       h+='<button class="ob-cta" onclick="obNext()">'+esc(st.cta)+'</button>';
       if(st.id==='hi'){
         h+='<div class="ob-links">';
-        h+='<button class="ob-link" onclick="obAIStart()">💬 或者，直接把目标告诉 AI 教练</button>';
         h+='<button class="ob-link" onclick="obRestoreStart()">已有恢复码？找回我的数据</button></div>';
       }
     }
@@ -369,31 +373,42 @@ function renderOB(){
           '<p class="ob-sub">'+esc(e.message||'未知错误')+'。点下面重试，若反复出现请不要用无痕/私密模式打开。</p>'+
           '<button class="ob-cta" onclick="location.reload()">重试</button></div></div></div>';
       }
-    },1200);
+    },500);
   }
 }
 window.obNext=function(){OB.i++;renderOB();};
 window.obBack=function(){OB.i=Math.max(0,OB.i-1);renderOB();};
-window.obPick=function(id,v){OB.a[id]=v;OB.i++;renderOB();};
+window.obPick=function(id,v){
+  OB.a[id]=v;
+  if(id==='mode'&&v==='race'&&!OB.a.aiFail){OB.a.goal='race';obAIStart();return;}
+  OB.i++;renderOB();
+};
 window.obDate=function(id){OB.a[id]=$('#ob-date').value||f(new Date());OB.i++;renderOB();};
 
 /* ---------- AI free-text path ---------- */
 const API='https://vela-api-coral.vercel.app';
 window.obAIStart=function(){
-  $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="renderOB()">‹ 返回</button>'+
+  $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="OB.i=1;renderOB()">‹ 返回</button>'+
     '<div class="ob-body"><div class="ob-step">'+
-    '<div class="ob-title">跟教练说说你的目标</div>'+
-    '<p class="ob-sub">随便怎么说都行，比如：「我想三个月后跑半马，现在能跑 5 公里，一周能练三天，膝盖不太好」。用键盘上的 🎤 语音听写更快。</p>'+
-    '<textarea class="ob-ta" id="ai-text" placeholder="我想…"></textarea>'+
+    '<div class="ob-title">跟教练说说你的备赛情况</div>'+
+    '<p class="ob-sub">三件事说清楚就行：<b>① 最近一次跑步的距离和用时/配速</b>（反映真实水平）<b>② 目标比赛和日期</b> <b>③ 想提升什么</b>。<br>比如：「最近一次 5 公里跑了 32 分钟。目标 10 月底的半马，想跑进 2 小时 30，顺便把心率降下来。一周能练 4 天。」<br>用键盘上的 🎤 语音听写更快。</p>'+
+    '<textarea class="ob-ta" id="ai-text" placeholder="最近一次跑步…目标是…"></textarea>'+
     '<button class="ob-cta" id="ai-go" onclick="obAIGo()">让教练理解 →</button>'+
     '</div></div></div>';
 };
+let aiTick=null;
 window.obAIGo=async function(){
   const t=($('#ai-text').value||'').trim();
   if(t.length<4)return;
-  const btn=$('#ai-go');btn.disabled=true;btn.textContent='教练在听…';
+  const btn=$('#ai-go');btn.disabled=true;
+  const phases=['教练在听…','正在理解你的水平…','正在换算目标…'];
+  let pi=0;btn.textContent=phases[0];
+  clearInterval(aiTick);aiTick=setInterval(()=>{pi=(pi+1)%phases.length;if($('#ai-go'))$('#ai-go').textContent=phases[pi];},2200);
   try{
-    const r=await fetch(API+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
+    const ctl=new AbortController();
+    const kill=setTimeout(()=>ctl.abort(),20000);
+    const r=await fetch(API+'/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t}),signal:ctl.signal});
+    clearTimeout(kill);clearInterval(aiTick);
     if(!r.ok)throw new Error('网络不给力');
     const d=await r.json();
     OB.a.goal=d.goal;
@@ -411,12 +426,19 @@ window.obAIGo=async function(){
       '<div class="ob-coach">🌙 '+esc(d.coach||'收到，我理解你的目标了。')+'</div>'+
       '<div class="ob-tags">'+tags.filter(Boolean).map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>'+
       '<button class="ob-cta" onclick="obAIConfirm()">对，继续 →</button>'+
-      '<div class="ob-links"><button class="ob-link" onclick="OB.i=1;renderOB()">不太对，改用点选回答</button></div>'+
+      '<div class="ob-links"><button class="ob-link" onclick="obAIFallback()">不太对，改用点选回答</button></div>'+
       '</div></div></div>';
   }catch(e){
+    clearInterval(aiTick);
     btn.disabled=false;btn.textContent='让教练理解 →';
-    alert('教练暂时联系不上（'+e.message+'），可以稍后再试或用点选模式。');
+    alert('教练暂时联系不上'+(e.name==='AbortError'?'（超时）':'')+'，可以再试一次，或点左上角返回后重新选择。');
   }
+};
+window.obAIFallback=function(){
+  OB.a.aiFail=true;
+  const steps=obSteps();
+  OB.i=steps.findIndex(s=>s.id==='dist');
+  renderOB();
 };
 window.obAIConfirm=function(){
   const steps=obSteps();
