@@ -1,176 +1,308 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
 <title>Vela · 你的训练教练</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Vela">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png?v=3">
 <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
 <style>
   :root{
-    --ink:#1D1D1F; --sub:#86868B; --line:#E8E8ED; --bg:#FBFBFD;
-    --rose:#B04E77; --rose-deep:#8E3A5F; --rose-bg:#F9EDF3;
-    --grad:linear-gradient(120deg,#C2426E,#7E2E5C);
-    --green:#3E9B72; --green-bg:#E5F3EC;
+    --navy:#2E4256; --navy-deep:#22344A;
+    --plum:#8E5274; --plum-bg:#F3E3EC;
+    --pink:#F0DCE7; --pink-soft:#F9F1F6;
+    --blue:#C7E2F2; --blue-deep:#5E82A6; --blue-bg:#EAF3FA;
+    --ink:#2E4256; --mut:#93A0AF; --soft:#5C6B7E;
+    --line:#EAE6EC;
+    --green:#4A9B7D; --green-bg:#E4F2EC;
+    --amber:#C08A45; --amber-bg:#F8EEDF;
+    --red:#C96A5E;   --red-bg:#F9E7E3;
+    --rose:#C95C7E;  --rose-bg:#FAE9EF;
+    --serif:ui-serif,'New York','Songti SC',Georgia,serif;
+    --script:'Snell Roundhand','Apple Chancery','Kaiti SC',cursive;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   [hidden]{display:none !important}
   html{min-height:100%}
-  body{background:var(--bg);color:var(--ink);
+  body{
+    background:#FBFAFC;
     font-family:-apple-system,'SF Pro Text','PingFang SC',system-ui,sans-serif;
-    font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+    color:var(--ink); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  }
   .num{font-variant-numeric:tabular-nums}
-  button{font:inherit;border:none;cursor:pointer;background:none}
-  button:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+
+  /* ---- home scene (Aman dawn) ---- */
+  .scene{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .5s;overflow:hidden;
+    background:
+      radial-gradient(130% 90% at 85% 6%, #CFE6F4 0%, rgba(207,230,244,0) 62%),
+      radial-gradient(120% 90% at 8% 14%, #F2DCE9 0%, rgba(242,220,233,0) 58%),
+      linear-gradient(168deg,#F7EFF5 0%,#EDF3F8 100%)}
+  body.on-home .scene{opacity:1}
+  .scene .hill{position:absolute;border-radius:50%;filter:blur(46px)}
+  .scene .h1{width:80vw;height:42vw;max-width:560px;background:#B98CA6;opacity:.20;bottom:-8vw;left:-14vw}
+  .scene .h2{width:76vw;height:40vw;max-width:520px;background:#2E4256;opacity:.10;bottom:-14vw;right:-16vw}
+  .scene .h3{width:50vw;height:26vw;max-width:360px;background:#9FBFD8;opacity:.22;bottom:2vw;right:6vw}
+  .scene .arc{position:absolute;width:140vmax;height:140vmax;border-radius:50%;left:50%;top:18%;
+    border:1.5px solid rgba(255,255,255,.65);border-color:rgba(255,255,255,.65) transparent transparent transparent;
+    transform:translateX(-50%) rotate(-8deg)}
+  .scene .arc.a2{top:23%;border-width:1px;opacity:.5;transform:translateX(-52%) rotate(-11deg)}
+  @media (prefers-reduced-motion:no-preference){
+    .scene .arc{animation:drift 26s ease-in-out infinite alternate}
+    .scene .arc.a2{animation:drift 34s ease-in-out infinite alternate-reverse}
+    @keyframes drift{from{transform:translateX(-50%) rotate(-8deg)}to{transform:translateX(-48%) rotate(-4deg)}}
+  }
+
+  #app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:14px 18px calc(96px + env(safe-area-inset-bottom))}
+  .view{display:none}.view.on{display:block}
+  @media (prefers-reduced-motion:no-preference){ .view.on{animation:in .2s ease} @keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}} }
+
 
   /* ---------- onboarding ---------- */
-  #ob{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;overflow-y:auto}
-  .ob-wrap{max-width:440px;width:100%;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) 26px 40px;
-    display:flex;flex-direction:column;min-height:100%}
+  #ob{position:fixed;inset:0;background:linear-gradient(160deg,#F4EFFA 0%,#FBF1EE 55%,#FDF6EF 100%);z-index:20;display:flex;flex-direction:column;overflow-y:auto}
+  .ob-wrap{max-width:440px;width:100%;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) 26px 40px;display:flex;flex-direction:column;min-height:100%}
   .ob-dots{display:flex;gap:6px;justify-content:center;margin-bottom:8px}
-  .ob-dots i{width:6px;height:6px;border-radius:99px;background:#DDD9DE;transition:all .3s}
-  .ob-dots i.on{background:var(--rose);width:18px}
+  .ob-dots i{width:6px;height:6px;border-radius:99px;background:#DDD3DE;transition:all .3s}
+  .ob-dots i.on{background:var(--plum);width:18px}
   .ob-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}
   .ob-step{animation:obin .35s ease}
   @keyframes obin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.ob-step{animation:none}}
-  .ob-mark{width:54px;height:54px;border-radius:14px;margin-bottom:22px;
-    background:var(--grad);position:relative;box-shadow:0 10px 26px rgba(154,58,100,.3)}
-  .ob-mark::after{content:'V';position:absolute;inset:0;display:grid;place-items:center;
-    color:#FFF6F9;font-family:ui-serif,'New York',Georgia,serif;font-style:italic;font-weight:700;font-size:30px}
-  .ob-title{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.25;text-wrap:balance}
-  .ob-sub{color:var(--sub);font-size:16px;margin-top:12px;line-height:1.65}
-  .ob-opts{margin-top:34px;display:flex;flex-direction:column;gap:11px}
-  .ob-opt{display:flex;align-items:center;gap:14px;text-align:left;background:#fff;border:1.5px solid var(--line);
-    border-radius:16px;padding:16px 18px;font-size:17px;font-weight:600;color:var(--ink);transition:transform .1s}
-  .ob-opt:active{transform:scale(.98)}
+  .ob-mark{width:54px;height:54px;border-radius:14px;margin-bottom:22px;background:var(--grad);position:relative;box-shadow:0 10px 26px rgba(154,58,100,.3)}
+  .ob-mark::after{content:'V';position:absolute;inset:0;display:grid;place-items:center;color:#FFF6F9;font-family:var(--serif);font-style:italic;font-weight:700;font-size:30px}
+  .ob-title{font-size:29px;font-weight:700;letter-spacing:-.02em;line-height:1.28;text-wrap:balance}
+  .ob-sub{color:var(--soft);font-size:15.5px;margin-top:12px;line-height:1.7}
+  .ob-opts{margin-top:32px;display:flex;flex-direction:column;gap:11px}
+  .ob-opt{display:flex;align-items:center;gap:14px;text-align:left;background:rgba(255,255,255,.8);border:1.5px solid rgba(154,144,164,.2);border-radius:16px;padding:15px 17px;font-size:16.5px;font-weight:600;color:var(--ink)}
   .ob-opt .e{font-size:22px}
-  .ob-opt small{display:block;font-weight:400;color:var(--sub);font-size:13.5px;margin-top:1px}
-  .ob-date{margin-top:34px}
-  .ob-date input{width:100%;font:inherit;font-size:18px;font-weight:600;padding:16px;border:1.5px solid var(--line);
-    border-radius:16px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none;text-align:left}
+  .ob-opt small{display:block;font-weight:400;color:var(--mut);font-size:13px;margin-top:1px}
+  .ob-date{margin-top:32px}
+  .ob-date input{width:100%;font:inherit;font-size:18px;font-weight:600;padding:15px;border:1.5px solid rgba(154,144,164,.25);border-radius:16px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none}
   .ob-date input::-webkit-date-and-time-value{text-align:left;margin:0}
-  .ob-cta{margin-top:26px;width:100%;background:var(--grad);color:#fff;font-size:17px;font-weight:700;
-    padding:17px;border-radius:99px;box-shadow:0 10px 26px rgba(154,58,100,.28)}
+  .ob-cta{margin-top:24px;width:100%;background:var(--grad);color:#fff;font-size:16.5px;font-weight:700;padding:16px;border-radius:99px;box-shadow:0 10px 26px rgba(154,58,100,.28)}
   .ob-cta[disabled]{opacity:.5}
-  .ob-links{margin-top:22px;display:flex;flex-direction:column;gap:12px;align-items:center}
-  .ob-link{color:var(--rose);font-size:14.5px;font-weight:600}
-  .ob-ta{width:100%;margin-top:26px;font:inherit;font-size:16px;line-height:1.6;padding:16px;border:1.5px solid var(--line);
-    border-radius:16px;background:#fff;color:var(--ink);resize:none;min-height:120px}
-  .ob-coach{margin-top:26px;background:var(--rose-bg);border-radius:18px;padding:18px;font-size:16px;line-height:1.7;color:#6E3A52}
+  .ob-links{margin-top:20px;display:flex;flex-direction:column;gap:12px;align-items:center}
+  .ob-link{background:none;color:var(--plum);font-size:14.5px;font-weight:600}
+  .ob-ta{width:100%;margin-top:26px;font:inherit;font-size:16px;line-height:1.6;padding:16px;border:1.5px solid rgba(154,144,164,.25);border-radius:16px;background:#fff;color:var(--ink);resize:none;min-height:130px}
+  .ob-coach{margin-top:26px;background:rgba(255,255,255,.85);border:1px solid rgba(154,144,164,.15);border-radius:18px;padding:18px;font-size:16px;line-height:1.75;color:#6E3A52}
   .ob-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-  .ob-tags span{font-size:13px;font-weight:700;background:#fff;border:1.5px solid var(--line);border-radius:99px;padding:6px 13px}
-  .ob-back{align-self:flex-start;color:var(--sub);font-size:15px;padding:8px 0;margin-bottom:4px}
-  .ob-spin{margin:0 auto;width:46px;height:46px;border-radius:50%;border:3.5px solid #EFDDE7;border-top-color:var(--rose);
-    animation:sp 1s linear infinite}
+  .ob-tags span{font-size:13px;font-weight:700;background:#fff;border:1.5px solid rgba(154,144,164,.2);border-radius:99px;padding:6px 13px}
+  .ob-back{align-self:flex-start;background:none;color:var(--mut);font-size:15px;padding:8px 0;margin-bottom:4px}
+  .ob-spin{margin:0 auto;width:46px;height:46px;border-radius:50%;border:3.5px solid #EFDDE7;border-top-color:var(--plum);animation:sp 1s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
   .ob-gen{text-align:center}
-  .ob-gen p{margin-top:22px;color:var(--sub)}
+  .ob-gen p{margin-top:22px;color:var(--soft)}
+  .ob-code-input{width:100%;font:inherit;font-size:18px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:15px;border:1.5px solid rgba(154,144,164,.25);border-radius:16px;background:#fff;margin-top:32px}
 
-  /* ---------- app ---------- */
-  #app{max-width:520px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom))}
-  .view{display:none}.view.on{display:block;animation:obin .25s ease}
-  header.top{display:flex;justify-content:space-between;align-items:center;padding:4px 2px 18px}
-  .wordmark{font-family:ui-serif,'New York',Georgia,serif;font-style:italic;font-weight:700;font-size:26px;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .h-chip{font-size:12.5px;font-weight:700;color:var(--sub);background:#fff;border:1px solid var(--line);
-    border-radius:99px;padding:5px 13px}
-  .h-chip b{color:var(--rose)}
-  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:14px;
-    box-shadow:0 6px 22px rgba(60,40,60,.05)}
-  .t-date{font-size:13px;font-weight:600;color:var(--sub)}
-  .t-phase{display:inline-block;margin-left:8px;font-size:11.5px;font-weight:700;color:var(--rose);
-    background:var(--rose-bg);border-radius:99px;padding:2px 10px}
-  .t-big{font-size:38px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-top:14px;text-wrap:balance}
-  .t-detail{color:var(--sub);font-size:15px;margin-top:10px;line-height:1.7}
-  .t-note{margin-top:14px;background:var(--rose-bg);border-radius:14px;padding:12px 15px;font-size:13.5px;
-    color:#7A4A60;line-height:1.65}
-  .t-btns{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
-  .b-main{flex:1;background:var(--grad);color:#fff;font-weight:700;font-size:16px;padding:15px;border-radius:99px;
-    box-shadow:0 8px 22px rgba(154,58,100,.25)}
-  .b-soft{background:var(--rose-bg);color:var(--rose-deep);font-weight:700;font-size:14px;padding:13px 20px;border-radius:99px}
-  .done-line{display:flex;align-items:center;gap:10px;margin-top:18px;color:var(--green);font-weight:800;font-size:16px}
-  .streak{color:#C58A2A;font-weight:800;font-size:13.5px;margin-top:10px}
-  .feel{display:flex;gap:8px;margin-top:18px;align-items:center;flex-wrap:wrap}
-  .feel span{font-size:12.5px;color:var(--sub);font-weight:600}
-  .feel button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--ink)}
-  .feel button.on{border-color:var(--rose);background:var(--rose-bg);color:var(--rose-deep)}
-  h2.sec{font-size:12px;font-weight:800;letter-spacing:.18em;color:var(--sub);margin:2px 0 14px;text-transform:uppercase}
-  .week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
-  .ws{ text-align:center;background:#fff;border:1.5px solid var(--line);border-radius:13px;padding:9px 2px;font-size:10.5px;color:var(--sub);font-weight:600}
-  .ws .d{font-weight:700;font-size:11.5px;color:var(--ink)}
-  .ws .k{font-weight:800;font-size:13px;color:var(--ink);margin-top:2px}
-  .ws.today{border-color:var(--rose)}
-  .ws.done{background:var(--rose);border-color:var(--rose);color:#F7DEE9}
-  .ws.done .d,.ws.done .k{color:#fff}
-  .day-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:15px}
+  /* ---- gear ---- */
+  .gear{position:fixed;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:5;
+    width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.8);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.95);box-shadow:0 6px 16px rgba(46,66,86,.12);
+    font-size:16px;display:grid;place-items:center;padding:0}
+
+  /* ---- home ---- */
+  .home{min-height:calc(100vh - 170px);display:flex;flex-direction:column;justify-content:center}
+  .home-top{display:flex;justify-content:space-between;align-items:center;padding:6px 2px 22px}
+  .wordmark b{display:block;font-family:var(--serif);font-weight:700;font-style:italic;font-size:34px;line-height:1;letter-spacing:.01em;
+    background:linear-gradient(105deg,#2E4256 30%,#8E5274 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wordmark i{display:block;font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.42em;color:var(--mut);margin-top:3px;padding-left:2px}
+  .h-count{font-size:12px;font-weight:700;color:var(--soft);background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.9);border-radius:99px;padding:4px 13px}
+  .h-count b{color:var(--plum)}
+  .flip-wrap{perspective:1400px}
+  .flip{position:relative;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.35,.1,.2,1)}
+  .flip.flipped{transform:rotateY(180deg)}
+  @media (prefers-reduced-motion:reduce){.flip{transition:none}}
+  .face{backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:rgba(255,255,255,.68);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    border:1px solid rgba(255,255,255,.95);border-radius:30px;padding:34px 26px 26px;
+    box-shadow:0 20px 50px rgba(84,74,110,.16);text-align:center;min-height:440px;
+    display:flex;flex-direction:column;justify-content:center}
+  .face.back{position:absolute;inset:0;transform:rotateY(180deg);justify-content:flex-start;text-align:left;overflow-y:auto;padding-top:28px}
+  .h-date{font-size:12.5px;font-weight:600;color:var(--soft);letter-spacing:.04em}
+  .h-phase{display:inline-block;margin:10px auto 0;font-size:11.5px;font-weight:700;color:var(--plum);background:var(--plum-bg);border-radius:99px;padding:4px 13px}
+  .h-phase.warn{color:var(--amber);background:var(--amber-bg)}
+  .h-kicker{margin-top:22px;font-size:11px;font-weight:700;letter-spacing:.3em;color:var(--blue-deep)}
+  .h-goal{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:6px}
+  .h-km{font-family:var(--serif);font-weight:300;font-size:94px;line-height:1.08;letter-spacing:0;color:var(--ink)}
+  .h-km.small{font-size:46px;line-height:1.3}
+  .h-unit{font-family:var(--serif);font-size:26px;color:var(--mut)}
+  .h-type{font-size:13px;font-weight:600;letter-spacing:.05em;margin-top:6px;color:var(--soft)}
+  .h-quote{font-family:var(--serif);font-style:italic;font-size:15.5px;color:var(--plum);margin-top:22px;line-height:1.8;text-wrap:balance}
+  .h-links{display:flex;gap:18px;justify-content:center;margin-top:16px}
+  .h-links button{background:none;color:var(--mut);font-size:12.5px;font-weight:600;padding:4px}
+  .mile-row{display:flex;align-items:baseline;justify-content:center;gap:7px;margin-top:4px}
+  .mile-big{font-family:var(--serif);font-weight:300;font-size:48px;color:var(--ink)}
+  .mile-sub{color:var(--mut);font-weight:600;font-size:15px}
+  .mile-bar{height:7px;border-radius:99px;background:#EFE8F3;overflow:hidden;margin-top:12px}
+  .mile-bar i{display:block;height:100%;border-radius:99px;background:var(--grad)}
+  .mile-txt{text-align:center;font-size:12px;color:var(--mut);font-weight:700;margin-top:8px}
+  .h-note{font-size:12.5px;color:var(--mut);margin-top:8px}
+  .h-slogan{font-family:var(--script);font-size:27px;color:var(--plum);margin-top:22px;line-height:1.4}
+  .h-btns{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer;border:none;font-weight:700}
+  button:focus-visible{outline:3px solid var(--blue-deep);outline-offset:2px}
+  .b-navy{background:var(--navy);color:#fff;border-radius:99px;padding:14px 30px;font-size:15px;box-shadow:0 10px 24px rgba(46,66,86,.28)}
+  .b-out{background:rgba(255,255,255,.65);color:var(--navy);border:1.5px solid var(--pink);border-radius:99px;padding:13px 24px;font-size:14px}
+  .b-plum{background:var(--plum-bg);color:var(--plum);border-radius:99px;padding:13px 24px;font-size:14px}
+  .h-why{background:none;color:var(--mut);font-size:12.5px;margin-top:18px;padding:6px;font-weight:600}
+  .done-badge{display:inline-flex;align-items:center;gap:7px;margin:20px auto 0;font-size:14px;font-weight:800;color:var(--green);background:var(--green-bg);border-radius:99px;padding:8px 18px}
+  .done-big{font-family:var(--serif);font-size:38px;font-weight:600;margin-top:14px;line-height:1.25}
+  .done-big .num{font-size:44px}
+  .streak{font-size:14px;font-weight:800;color:var(--amber);margin-top:12px}
+  .ex-done{display:inline-block;background:var(--green-bg);color:var(--green);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;margin:2px}
+  .extra-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:16px;font-size:12px;color:var(--mut);font-weight:600}
+  .chip-btn{background:var(--pink-soft);border:1px solid var(--pink);color:var(--plum);border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:700}
+  .cell.fill{border-color:transparent}
+  .cell.fill .dn{color:rgba(255,255,255,.8)}
+  .cell.fill .ind{color:#fff !important;font-size:14px}
+  .cell.fill .plus{font-size:9px;color:rgba(255,255,255,.85);font-weight:800}
+  /* back face */
+  .why-kicker{font-size:11px;font-weight:700;letter-spacing:.3em;color:var(--blue-deep);text-align:center;margin-bottom:14px}
+  .score-line{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .score-line .sc{font-family:var(--serif);font-size:38px;font-weight:600}
+  .lv-pill{font-size:11.5px;font-weight:800;border-radius:99px;padding:3px 12px}
+  .lv-pill.green{background:var(--green-bg);color:var(--green)}
+  .lv-pill.amber{background:var(--amber-bg);color:var(--amber)}
+  .lv-pill.red{background:var(--red-bg);color:var(--red)}
+  ul.why{list-style:none}
+  ul.why li{font-size:13.5px;line-height:1.65;color:var(--soft);padding:9px 0 9px 20px;border-top:1px solid var(--line);position:relative}
+  ul.why li::before{content:'';position:absolute;left:2px;top:17px;width:7px;height:7px;border-radius:99px;background:var(--plum)}
+  .back-quote{font-size:13px;color:var(--mut);margin-top:14px;line-height:1.7;font-weight:500}
+  .back-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+
+  /* ---- shared cards ---- */
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:14px;box-shadow:0 8px 26px rgba(84,74,110,.07)}
+  h2.sec{font-size:11.5px;font-weight:800;letter-spacing:.22em;color:var(--mut);margin:2px 0 14px;text-transform:uppercase}
+  .page-title{font-family:var(--serif);font-size:26px;font-weight:600;margin:12px 2px 18px;text-align:center}
+  .cell .em{font-size:15px;line-height:1.15;margin-top:1px}
+  .cell.fill .klabel{font-size:10.5px;font-weight:800;color:#fff;line-height:1.2}
+  .p-total{font-size:14px;font-weight:700;color:#4E3D50;margin-top:8px}
+  .p-total b{font-family:var(--serif);font-size:28px;font-weight:600;margin:0 2px}
+  .p-hero{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+  .p-hero b{font-family:var(--serif);font-size:64px;font-weight:600;line-height:1;letter-spacing:-.01em;color:#2E4256}
+  .p-hero span{font-size:17px;font-weight:700;color:#6E5F7B}
+  .p-bar{height:9px;border-radius:99px;background:rgba(255,255,255,.6);margin-top:12px;overflow:hidden}
+  .p-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8E5274,#2E4256)}
+  .hint{font-size:12px;color:var(--mut);margin-top:8px;font-weight:500;line-height:1.65}
+
+  /* ---- check-in ---- */
+  .q{margin-bottom:17px}
+  .q label.t{display:block;font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.08em;margin-bottom:9px}
+  .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .opts.o3{grid-template-columns:repeat(3,1fr)}
+  .opt{border:1.5px solid var(--pink);background:#fff;border-radius:99px;padding:10px 3px;text-align:center;font-size:13px;font-weight:700;color:var(--soft)}
+  .opt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+  .period-line{font-size:13.5px;color:var(--soft);margin-bottom:10px;font-weight:500}
+  .period-line b{color:var(--rose)}
+  .btnrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .b-pri{background:var(--navy);color:#fff;border-radius:99px;padding:13px 20px;font-size:15px;flex:1;box-shadow:0 8px 20px rgba(46,66,86,.24)}
+  .b-sec{background:var(--plum-bg);color:var(--plum);border-radius:99px;padding:12px 18px;font-size:14px}
+  .b-ghost{background:#fff;color:var(--soft);border:1.5px solid var(--pink);border-radius:99px;padding:12px 18px;font-size:14px}
+
+  /* ---- calendar ---- */
+  .seg{display:flex;background:var(--pink-soft);border-radius:99px;padding:4px;gap:2px;width:max-content}
+  .seg button{background:none;border-radius:99px;padding:8px 22px;font-size:13px;color:var(--soft)}
+  .seg button.on{background:var(--navy);color:#fff}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px}
+  .cal-title{font-family:var(--serif);font-size:20px;font-weight:600}
+  .cal-nav button{background:#fff;border:1px solid var(--line);border-radius:99px;width:34px;height:34px;font-size:15px;color:var(--soft);padding:0}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal .wdh{text-align:center;font-size:10.5px;font-weight:700;color:var(--mut);padding:4px 0;letter-spacing:.1em}
+  .cell{min-height:56px;border-radius:14px;padding:5px 2px 4px;text-align:center;background:#fff;border:1.5px solid transparent}
+  .cell.out{opacity:.28}
+  .cell.today{border-color:var(--navy)}
+  .cell .dn{font-size:11px;font-weight:700;color:var(--mut)}
+  .cell .ind{font-size:12.5px;font-weight:800;margin-top:3px}
+  .cell .sub{font-size:9px;font-weight:700;color:var(--mut);letter-spacing:.02em}
+  .cell .mens{display:block;width:5px;height:5px;border-radius:99px;background:var(--rose);margin:3px auto 0}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;font-weight:700;color:var(--soft)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:99px;margin-right:5px;font-style:normal}
+  .day-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}
   .day-row:first-of-type{border-top:none}
-  .day-row .dt{width:74px;color:var(--sub);flex-shrink:0;font-weight:600;font-size:13px}
+  .day-row .dt{width:76px;color:var(--mut);flex-shrink:0;font-weight:600;font-size:13px}
   .day-row .nm{flex:1;font-weight:700}
-  .day-row .nm small{display:block;font-weight:400;color:var(--sub);font-size:12.5px}
-  .day-row.today-row{background:var(--rose-bg);margin:0 -10px;padding:12px 10px;border-radius:14px;border-top:none}
-  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}
-  .cal .wdh{text-align:center;font-size:10.5px;font-weight:700;color:var(--sub);padding:4px 0}
-  .cell{min-height:50px;border-radius:12px;padding:5px 2px;text-align:center;background:#fff;border:1.5px solid transparent;font-size:10px;color:var(--sub)}
-  .cell .dn{font-size:11px;font-weight:700;color:var(--sub)}
-  .cell .ind{font-weight:800;font-size:12px;color:var(--rose);margin-top:2px}
-  .cell.today{border-color:var(--rose)}
-  .cell.done{background:var(--grad);color:#F7DEE9;border-color:transparent}
-  .cell.done .dn,.cell.done .ind{color:#fff}
-  .cal-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px}
-  .cal-title{font-size:18px;font-weight:700}
-  .cal-nav button{background:#fff;border:1px solid var(--line);border-radius:99px;width:32px;height:32px;font-size:14px;color:var(--sub)}
-  .hint{font-size:12.5px;color:var(--sub);margin-top:10px;line-height:1.7}
-  .p-row{display:flex;justify-content:space-between;padding:13px 0;border-top:1px solid var(--line);font-size:15px}
-  .p-row:first-of-type{border-top:none}
-  .p-row b{font-weight:700}
-  .p-row span{color:var(--sub)}
+  .day-row .nm small{display:block;font-weight:500;color:var(--mut);font-size:12px}
+  .day-row .km{font-family:var(--serif);font-weight:600;font-size:16px}
+  .day-row.is-today{background:var(--blue-bg);margin:0 -10px;padding:11px 10px;border-radius:14px;border-top:none}
+  .day-row.dim{opacity:.45}
+  .sel-detail{margin-top:12px;background:var(--pink-soft);border-radius:16px;padding:13px 16px;font-size:13px;color:var(--soft);line-height:1.65}
+  .sel-detail b{color:var(--navy)}
+
+  /* ---- history poster ---- */
+  .poster{border-radius:28px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:0 18px 44px rgba(84,74,110,.14);margin-bottom:14px}
+  .p-head{background:linear-gradient(115deg,#F2DCE9 0%,#E8E4F0 45%,#CFE6F4 100%);padding:26px 24px 22px;position:relative}
+  .p-script{font-family:var(--script);font-size:24px;color:var(--plum);line-height:1.3}
+  .p-month{font-family:var(--serif);font-size:44px;font-weight:600;line-height:1.1;margin-top:6px;letter-spacing:.01em}
+  .p-sub{font-size:11px;font-weight:700;letter-spacing:.26em;color:var(--soft);margin-top:6px}
+  .p-body{padding:18px 20px 20px}
+  .p-body .cal{gap:3px}
+  .p-body .cell{min-height:54px;border-radius:11px;padding-top:3px}
+  .p-mark{width:26px;height:26px;border-radius:99px;display:grid;place-items:center;margin:2px auto 0;font-size:9.5px;font-weight:800;color:#fff}
+  .p-mark.miss{background:none;border:1.5px dashed #D9D2DC;color:transparent}
+  .p-mark.future{background:none;color:var(--mut);font-weight:700}
+  .p-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;border-top:1px solid var(--line);padding-top:16px}
+  .p-stat{text-align:center}
+  .p-stat .v{font-family:var(--serif);font-size:24px;font-weight:600}
+  .p-stat .k{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--mut);margin-top:2px}
+  .p-foot{display:flex;justify-content:space-between;align-items:center;padding:0 20px 18px;font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--mut)}
+  .p-foot .wm{font-family:var(--serif);font-size:16px;letter-spacing:.02em;color:var(--navy)}
+
+  /* ---- settings ---- */
+  .frm label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:13px 0 6px;letter-spacing:.05em}
+  .frm input{width:100%;font:inherit;font-weight:600;padding:11px 14px;border:1.5px solid var(--pink);border-radius:14px;background:#fff;color:var(--ink);text-align:left}
+  .frm input[type=date]{-webkit-appearance:none;appearance:none}
+  .frm input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+  .frm input:focus-visible{outline:3px solid var(--blue-deep);outline-offset:1px;border-color:var(--blue-deep)}
+  textarea#io{width:100%;height:90px;font:12px ui-monospace,monospace;border:1.5px solid var(--pink);border-radius:14px;padding:10px;margin-top:10px;background:#fff}
+  .banner{background:var(--amber-bg);color:var(--amber);border-radius:16px;padding:12px 15px;font-size:13px;font-weight:700;margin-bottom:14px}
+
+  /* ---- nav ---- */
   nav.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));z-index:5;
-    width:min(420px,calc(100% - 32px));background:rgba(255,255,255,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-    border:1px solid var(--line);border-radius:99px;display:flex;gap:2px;padding:6px;box-shadow:0 12px 32px rgba(60,40,60,.14)}
-  nav.tabs button{flex:1;color:var(--sub);font-size:14px;font-weight:700;padding:12px 0;border-radius:99px}
-  nav.tabs button.on{color:#fff;background:var(--grad)}
+    width:min(492px,calc(100% - 28px));
+    background:rgba(255,255,255,.86);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.95);border-radius:99px;display:flex;gap:2px;
+    padding:6px;box-shadow:0 14px 34px rgba(46,66,86,.18)}
+  nav.tabs button{flex:1;background:none;color:var(--mut);font-size:13px;font-weight:700;padding:11px 0;border-radius:99px}
+  nav.tabs button.on{color:#fff;background:var(--navy)}
 </style>
-</head>
-<body>
-<div id="boot-msg" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#86868B;font-size:15px;background:#FBFBFD">
-  <div style="font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:34px;background:linear-gradient(120deg,#C2426E,#7E2E5C);-webkit-background-clip:text;background-clip:text;color:transparent">Vela</div>
-  <div>正在准备…</div>
-  <noscript>需要开启 JavaScript 才能使用 Vela</noscript>
+
+<div class="scene" aria-hidden="true">
+  <div class="hill h1"></div><div class="hill h2"></div><div class="hill h3"></div>
+  <div class="arc"></div><div class="arc a2"></div>
 </div>
+<button class="gear" onclick="switchView('settings')" aria-label="设置">⚙︎</button>
 <div id="ob" hidden></div>
-<div id="app" hidden>
-  <header class="top">
-    <span class="wordmark">Vela</span>
-    <span class="h-chip" id="h-goal"></span>
-  </header>
+
+<div id="app">
   <section class="view" id="view-today"></section>
+  <section class="view" id="view-checkin"></section>
   <section class="view" id="view-plan"></section>
-  <section class="view" id="view-me"></section>
+  <section class="view" id="view-history"></section>
+  <section class="view" id="view-settings"></section>
 </div>
-<nav class="tabs" hidden aria-label="主导航">
+<nav class="tabs" aria-label="主导航">
   <button data-v="today">今天</button>
+  <button data-v="checkin">打卡</button>
   <button data-v="plan">课表</button>
-  <button data-v="me">我的</button>
+  <button data-v="history">历程</button>
 </nav>
 
 <script>
 'use strict';
-window.onerror=function(msg,src,line){
-  var el=document.getElementById('boot-msg');
-  if(el){el.innerHTML='<div style="max-width:320px;text-align:center;padding:20px"><b style="color:#B04E77">页面出了点问题</b><br><br><code style="font-size:12px;word-break:break-all">'+msg+' @'+line+'</code><br><br>请截图发给 Vela，然后点 <a href="javascript:location.reload()" style="color:#B04E77;font-weight:700">重试</a></div>';el.style.display='flex';}
+const KEY='vela.go.v2';
+const DEFAULTS={
+  goal:'', races:[], level:'5', days:'4-5', style:'', notesAI:'',
+  cycleOn:false, cycleLen:28, lastPeriod:''
 };
-const KEY='vela.go.v1';
 let state=load();
 function load(){
-  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s;}catch(e){}
-  return {v:1,profile:null,checkins:{},planStart:null};
+  try{const s=JSON.parse(localStorage.getItem(KEY));
+    if(s&&s.settings){s.settings={...DEFAULTS,...s.settings};return s;}
+  }catch(e){}
+  return {settings:{...DEFAULTS},planStart:null,checkins:{},cycleStarts:[],overdueChecks:[],overrides:{}};
 }
 function save(){
   state.updatedAt=Date.now();
-  try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){/* 私密模式：内存态继续可用 */}
+  try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
   if(typeof cloudPush==='function')cloudPush();
 }
 
@@ -183,128 +315,919 @@ function monday(d){const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7))
 function dayDiff(a,b){return Math.round((p(f(a))-p(f(b)))/864e5);}
 function todayStr(){return f(new Date());}
 const WD=['日','一','二','三','四','五','六'];
-const $=s=>document.querySelector(s);
-function esc(x){return String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const MONTH_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-/* ---------- cycle ---------- */
-function phaseDay(ds){
-  const c=state.profile&&state.profile.cycle;
-  if(!c||!c.on||!c.last)return null;
-  const diff=dayDiff(p(ds),p(c.last));
-  if(diff<0)return null;
-  return (diff%(c.len||28))+1;
-}
-function phaseInfo(ds){
-  const d=phaseDay(ds);
-  if(d==null)return null;
-  if(d<=2)return{d,key:'mens1',name:'经期第'+d+'天',emoji:'🩸'};
-  if(d<=5)return{d,key:'mens2',name:'经期第'+d+'天',emoji:'🩸'};
-  if(d<=13)return{d,key:'foll',name:'卵泡期',emoji:'🌱'};
-  if(d<=16)return{d,key:'ovul',name:'排卵期',emoji:'🌕'};
-  if(d>=(state.profile.cycle.len||28)-3)return{d,key:'lute2',name:'黄体期后段',emoji:'🌘'};
-  return{d,key:'lute',name:'黄体期',emoji:'🌙'};
-}
+if(!state.planStart){state.planStart=f(monday(new Date()));save();}
+if(state.settings.lastPeriod&&!state.cycleStarts.length){state.cycleStarts=[state.settings.lastPeriod];save();}
+/* migrate from go v1 (build<=14) */
+try{
+  if(!state.settings.goal){
+    const v1=JSON.parse(localStorage.getItem('vela.go.v1')||'null');
+    if(v1&&v1.profile){
+      const pr=v1.profile;
+      state.settings={...DEFAULTS,goal:pr.goal||'',races:pr.races||(pr.race&&pr.race.date?[{name:'',dist:pr.race.dist,date:pr.race.date}]:[]),
+        level:pr.level||'5',days:pr.days||'4-5',style:pr.style||'',notesAI:pr.notes||'',
+        cycleOn:!!(pr.cycle&&pr.cycle.on),cycleLen:(pr.cycle&&pr.cycle.len)||28,lastPeriod:(pr.cycle&&pr.cycle.last)||''};
+      state.checkins=v1.checkins||{};
+      state.code=v1.code||null;
+      if(pr.planStart)state.planStart=pr.planStart;
+      if(state.settings.lastPeriod)state.cycleStarts=[state.settings.lastPeriod];
+      save();
+    }
+  }
+}catch(e){}
 
-/* ---------- plan engines ---------- */
+
+/* ---------- workout types ---------- */
+const TYPES={
+  easy:{label:'轻松跑'}, mp:{label:'轻松跑 + 马配段'}, long:{label:'长距离'},
+  hill:{label:'坡度跑'}, interval:{label:'间歇跑'},
+  strides:{label:'轻松跑 + 加速跑'}, shake:{label:'赛前激活慢跑'},
+  strength:{label:'力量循环'}, race:{label:'比赛日 🏁'}, event:{label:'活动 / 模拟赛'},
+  hike:{label:'越野跑'}, cross:{label:'交叉训练'}, stretch:{label:'拉伸 / 柔韧'},
+  wr:{label:'走跑结合'}, walk:{label:'快走'}, cardio:{label:'有氧'}, core:{label:'核心'},
+  flow:{label:'流动瑜伽'}, pilates:{label:'核心普拉提'}, hipf:{label:'髋与下背释放'},
+  rest:{label:'休息'}
+};
+const LEVEL_PACE={'3':{easy:'8:10–8:50',long:'8:20–9:00',mp:'7:45',int:'7:00–7:20'},
+  '5':{easy:'7:20–8:00',long:'7:30–8:10',mp:'7:05',int:'6:20–6:40'},
+  '10':{easy:'6:50–7:25',long:'7:00–7:35',mp:'6:25',int:'5:45–6:05'},
+  '15':{easy:'6:15–6:50',long:'6:30–7:05',mp:'5:55',int:'5:15–5:35'}};
+function paceOf(t){
+  const P=LEVEL_PACE[state.settings.level]||LEVEL_PACE['5'];
+  if(t==='easy'||t==='strides')return P.easy+' /km，聊天配速';
+  if(t==='shake')return '很轻松，抖开就行';
+  if(t==='long')return P.long+' /km，轻松聊天档';
+  if(t==='mp')return '轻松 '+P.easy.split('–')[0]+' · 马配 '+P.mp+' /km';
+  if(t==='interval')return '快段 '+P.int+' /km，组间慢跑恢复';
+  if(t==='hill')return '上坡强度课，心率为准，下坡走';
+  if(t==='race')return '按目标配速来，前半程忍住';
+  return '';
+}
+function labelFor(w){return w.name?(w.name+' 🏁'):(TYPES[w.t]||TYPES.rest).label;}
 const DIST_PEAK={'5k':8,'10k':12,'half':18,'full':30,'trail':20};
 const DIST_NAME={'5k':'5K','10k':'10K','half':'半程马拉松','full':'全程马拉松','trail':'越野跑'};
+const DIST_EMOJI={'5k':'⚡️','10k':'🏃‍♀️','half':'🎽','full':'🏁','trail':'⛰️'};
 const LEVEL_START={'3':3,'5':5,'10':8,'15':12};
-function runDays(n){return n==='2-3'?[2,4,0]:n==='4-5'?[2,4,6,0]:[2,3,4,6,0];}
-function weekIdx(ds){return Math.floor(dayDiff(p(ds),p(state.planStart))/7);}
+const RANK={'5k':5,'10k':10,'trail':20,'half':21,'full':42};
+function aRace(rs){return rs.reduce((m,r)=>RANK[r.dist]>=RANK[m.dist]?r:m,rs[0]);}
+function runDaysOf(pref){return pref==='2-3'?[2,4,0]:pref==='4-5'?[2,4,6,0]:[1,2,3,4,6,0];}
+const TYPE_INK={long:'#8E5274',mp:'#8E5274',hill:'#8E5274',trail:'#8E5274',race:'#8E5274',interval:'#8E5274',event:'#8E5274',
+  easy:'#5E82A6',strides:'#5E82A6',shake:'#5E82A6',hike:'#8E5274',wr:'#5E82A6',walk:'#5E82A6',cardio:'#5E82A6',
+  strength:'#2E4256',cross:'#2E4256',core:'#2E4256',
+  rest:'#4A9B7D',stretch:'#4A9B7D',flow:'#4A9B7D',pilates:'#4A9B7D',hipf:'#4A9B7D'};
+const TYPE_EMOJI={easy:'🏃‍♀️',long:'🏃‍♀️',mp:'🏃‍♀️',strides:'🏃‍♀️',shake:'🏃‍♀️',hill:'⛰️',interval:'⚡️',race:'🏁',event:'🏋️',
+  strength:'💪',cross:'💪',core:'💪',hike:'⛰️',wr:'🚶‍♀️',walk:'🚶‍♀️',cardio:'🚴‍♀️',
+  stretch:'🧘‍♀️',flow:'🧘‍♀️',pilates:'🧘‍♀️',hipf:'🧘‍♀️',rest:'😴'};
+const RUN_TYPES=['easy','long','mp','hill','interval','strides','shake','race','hike','wr'];
+const QUOTES={
+  green:['配速是练出来的，不是求出来的。今天的每一公里都记在比赛日的账上。','你不需要今天跑很快，你只需要今天跑。','状态好的日子不多，别浪费在犹豫上。','起跑线上的底气，全是这种普通日子攒出来的。','今天多跑的一公里，比赛日会替你说话。','马拉松不看谁跑得快，看谁停得少。','绿灯日是身体送你的礼物，拆开它。','慢慢跑，跑完就是赢。','你和完赛线之间，隔着的就是一个个今天。','身体已经准备好了，剩下的交给双腿。'],
+  amber:['减量不是偷懒，是聪明地训练。','今天七分力，换明天十分状态。','课表为你让路，是为了让你走得更远。','完成比完美重要，把今天的量跑完就好。','累的日子慢慢跑，也是在变强。','不硬撑，是一种成熟跑者才有的能力。','黄灯日的坚持，比绿灯日更值钱。','把今天当成节奏调整，不是退步。','身体在说话，你听了，这就是进步。','跑得久的人，都很会在中途松油门。'],
+  red:['休息也是课表的一部分，今天的任务就是恢复。','肌肉是在休息时变强的，你今天正在变强。','敢于休息，是备赛期最难的一种自律。','今天不跑，是为了比赛那天能一直跑。','身体喊停的时候听它的，它比意志聪明。','一个训练日可以错过，一个身体不能。','热敷、早睡、别内疚，这就是今天的训练内容。','暂停不是终止，明天见。','恢复日睡着的每一小时，都算训练量。','心疼自己，也是备赛技术的一部分。']
+};
+const SLOGANS={
+  green:['Today is yours to run.','Light feet, brave heart.','She runs toward the start line.','Begin, and the road rises.','Make it count, gently.','The morning belongs to you.','One more day, one more mile.'],
+  amber:['Softly does it.','Slow is still forward.','Grace over grind.','Ease into it, stay long.','Gentle pace, steady heart.'],
+  red:['Rest is training, too.','Be gentle with yourself today.','Stillness is how you grow.','The pause makes the leap.','Bloom later. Rest now.']
+};
+function dayHash(){const d=new Date();return d.getFullYear()*372+d.getMonth()*31+d.getDate();}
+function dailyQuote(level){const pool=QUOTES[level==='amber'?'amber':level==='red'?'red':'green'];return pool[dayHash()%pool.length];}
+function dailySlogan(level){const pool=SLOGANS[level==='amber'?'amber':level==='red'?'red':'green'];return pool[dayHash()%pool.length];}
+function phaseEmoji(k){return{mens1:'🩸',mens2:'🩸',foll:'🌱',ovul:'🌕',lute:'🌙',lute2:'🌘',overdue:'⏳'}[k]||'';}
+function races(){
+  return (state.settings.races||[])
+    .filter(r=>r&&DIST_PEAK[r.dist]&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||''))
+    .slice().sort((a,b)=>a.date<b.date?-1:1)
+    .map(r=>({name:r.name||DIST_NAME[r.dist],emoji:DIST_EMOJI[r.dist]||'🏁',date:r.date,dist:r.dist}));
+}
 
-function slotFor(ds){
-  const pr=state.profile;
-  if(!pr)return null;
-  const wd=p(ds).getDay();
-  const wi=weekIdx(ds);
-  const days=runDays(pr.days);
-  const g=pr.goal;
-  let w=null;
-  if(g==='race'){
-    const races=racesOf(pr);
-    if(!races.length)return null;
-    const A=aRace(races);
-    /* 比赛日本尊 */
-    const tr=races.find(r=>r.date===ds);
-    if(tr)return{t:'race',label:(tr.name||DIST_NAME[tr.dist])+' 比赛日 🏁',detail:'享受它，你准备好了',km:0};
-    if(ds>races[races.length-1].date)return null;
-    /* 每场比赛的前后保护：赛前2天短热身、赛前1天休、赛后2天恢复 */
-    for(const r of races){
-      const before=dayDiff(p(r.date),p(ds));
-      if(before===1)return{t:'rest',label:'赛前休息',detail:'明天是 '+(r.name||DIST_NAME[r.dist])+'，养精蓄锐',km:0};
-      if(before===2)return{t:'easy',label:'赛前激活 3 km',detail:'很轻松地抖开身体，别练累',km:3};
-      const after=dayDiff(p(ds),p(r.date));
-      if(after===1||after===2)return{t:'rest',label:'赛后恢复',detail:'比赛后 48 小时，走路和拉伸最好',km:0};
+/* ---------- cycle phase ---------- */
+function phaseFor(ds){
+  const cs=[...state.cycleStarts].sort();
+  if(!cs.length)return{name:'周期未设置',key:'unset',adj:0,day:null};
+  const last=cs[cs.length-1];
+  const day=dayDiff(p(ds),p(last))+1;
+  if(day<1)return{name:'周期未设置',key:'unset',adj:0,day:null};
+  const C=state.settings.cycleLen;
+  let predicted=C;
+  const od=state.overdueChecks.filter(x=>x>last).sort();
+  if(od.length)predicted=Math.max(predicted,dayDiff(p(od[od.length-1]),p(last))+2);
+  if(day>predicted)return{name:'经期推迟中（第'+day+'天）',key:'overdue',adj:-10,day};
+  return phaseOfDay(day,predicted);
+}
+function phaseOfDay(day,predicted){
+  if(day<=2)return{name:'经期第'+day+'天',key:'mens1',adj:-14,day};
+  if(day<=5)return{name:'经期第'+day+'天',key:'mens2',adj:-6,day};
+  if(day<=13)return{name:'卵泡期 · 第'+day+'天',key:'foll',adj:6,day};
+  if(day<=16)return{name:'排卵期 · 第'+day+'天',key:'ovul',adj:0,day};
+  if(day>predicted-4)return{name:'黄体期后段 · 第'+day+'天',key:'lute2',adj:-8,day};
+  return{name:'黄体期 · 第'+day+'天',key:'lute',adj:0,day};
+}
+function recentStrain(){
+  let s=0,n=0;
+  for(let i=1;i<=3;i++){
+    const k=f(addD(new Date(),-i)),ci=state.checkins[k];
+    if(ci&&ci.sleep!=null){
+      const ph=phaseFor(k);
+      s+=55+SLEEP_ADJ[ci.sleep]+WORK_ADJ[ci.work]+ph.adj+FEEL_ADJ[ci.feel==null?1:ci.feel];n++;
     }
-    /* 长距离渐进以最重头的比赛(A赛)倒推 */
-    const total=Math.max(4,Math.ceil(dayDiff(p(A.date),p(state.planStart))/7));
-    const taper=A.dist==='full'||A.dist==='half'?2:1;
-    const L0=LEVEL_START[pr.level]||5, peak=DIST_PEAK[A.dist];
-    const build=Math.max(1,total-taper-1);
-    let long=Math.min(peak,L0+(peak-L0)*Math.min(1,wi/Math.max(1,build-1)));
-    if(wi%4===3&&wi<build-1)long*=0.75;
-    if(wi>=build)long=peak*0.6*Math.max(0.3,(1-(wi-build)*0.25));
-    long=Math.max(3,Math.round(long));
-    const easy=Math.max(3,Math.round(long*0.45));
-    if(wd===0)w={t:'long',label:'长距离 '+long+' km',detail:'轻松聊天配速，慢就是对',km:long};
-    else if(wd===2)w={t:'easy',label:'轻松跑 '+easy+' km',detail:'能聊天的配速，心率放低',km:easy};
-    else if(wd===4&&wi>=2){
-      if(A.dist==='trail'||races.some(r=>r.dist==='trail'))w={t:'hill',label:'坡度跑 '+easy+' km',detail:'6 组上坡 90 秒，下坡走回（护膝）',km:easy};
-      else if(A.dist==='5k'||A.dist==='10k')w={t:'int',label:'间歇跑 '+easy+' km',detail:'6×400m 快 + 慢跑恢复，提最大摄氧量',km:easy};
-      else w={t:'tempo',label:'节奏跑 '+easy+' km',detail:'中间 '+Math.max(2,Math.round(easy*0.4))+' km 稍快于目标配速',km:easy};
-    }
-    else if(wd===4)w={t:'easy',label:'轻松跑 '+easy+' km',detail:'打底阶段，全部轻松',km:easy};
-    else if(days.includes(wd)&&wd===6)w={t:'easy',label:'轻松跑 '+Math.max(3,Math.round(long*0.35))+' km',detail:'长距离前一天，短而轻',km:Math.max(3,Math.round(long*0.35))};
-    else if(days.includes(wd))w={t:'strength',label:'力量 30 分钟',detail:'深蹲 · 臀桥 · 平板支撑 · 提踵，各 3 组',min:30};
-  }else if(g==='fatloss'){
-    const base=Math.min(55,30+wi*2);
-    const menu=pr.style==='walkrun'
-      ?[{t:'wr',label:'走跑结合 '+base+' 分钟',detail:'快走 3 分钟 + 慢跑 2 分钟，循环',min:base},
-        {t:'strength',label:'力量循环 30 分钟',detail:'深蹲 · 弓步 · 俯卧撑（跪姿可）· 平板，各 3 组',min:30},
-        {t:'walk',label:'快走 45 分钟',detail:'微喘但能说话的强度',min:45}]
-      :pr.style==='run'
-      ?[{t:'easy',label:'轻松跑 '+Math.round(base/8)+' km',detail:'能聊天的配速',km:Math.round(base/8)},
-        {t:'strength',label:'力量循环 30 分钟',detail:'下肢 + 核心，各 3 组',min:30},
-        {t:'wr',label:'变速走跑 '+base+' 分钟',detail:'1 分钟快 + 2 分钟慢，循环',min:base}]
-      :[{t:'strength',label:'力量循环 35 分钟',detail:'全身大肌群，重量以 12 次力竭为准',min:35},
-        {t:'cardio',label:'有氧 '+base+' 分钟',detail:'跑步机 / 单车 / 椭圆机任选，中低强度',min:base},
-        {t:'core',label:'核心 + 快走 40 分钟',detail:'核心 15 分钟 + 快走 25 分钟',min:40}];
-    const idx=days.indexOf(wd);
-    if(idx>=0)w=menu[idx%menu.length];
-  }else if(g==='flex'){
-    const mins=pr.style==='45'?45:pr.style==='15'?15:30;
-    const menu=[
-      {t:'flow',label:'流动瑜伽 '+mins+' 分钟',detail:'呼吸带动身体，慢下来',min:mins},
-      {t:'pilates',label:'核心普拉提 '+mins+' 分钟',detail:'骨盆稳定 + 深层核心',min:mins},
-      {t:'hip',label:'髋与下背释放 '+mins+' 分钟',detail:'久坐者的解药',min:mins},
-      {t:'stretch',label:'全身拉伸 '+Math.min(mins,30)+' 分钟',detail:'每个动作停留 45 秒',min:Math.min(mins,30)}];
-    const idx=days.indexOf(wd);
-    if(idx>=0)w=menu[(idx+wi)%menu.length];
-  }else{
-    const menu=[
-      {t:'strength',label:'全身力量 35 分钟',detail:'深蹲 · 硬拉 · 推 · 拉，各 3-4 组',min:35},
-      {t:'cardio',label:'轻松有氧 30 分钟',detail:'跑 / 骑 / 划船任选',min:30},
-      {t:'core',label:'核心 + 臀腿 30 分钟',detail:'平板家族 + 臀桥 + 箭步蹲',min:30},
-      {t:'outdoor',label:'户外快走或慢跑 40 分钟',detail:'晒晒太阳，动起来就赢',min:40}];
-    const idx=days.indexOf(wd);
-    if(idx>=0)w=menu[(idx+wi)%menu.length];
   }
-  /* cycle overlay: day 1-2 rest, key session shifts a day earlier if possible */
-  const ph=phaseInfo(ds);
-  if(ph&&ph.key==='mens1'&&w&&w.t!=='race')
-    return{t:'rest',label:'休息日 🌙',detail:'经期第 '+ph.d+' 天，休息写在课表里，不算偷懒',km:0};
-  return w;
+  return n?s/n:null;
 }
-function planFor(ds){
-  const w=slotFor(ds);
-  if(w)return w;
-  const ph=phaseInfo(ds);
-  if(ph&&ph.key==='mens1')
-    return{t:'rest',label:'休息日 🌙',detail:'经期第 '+ph.d+' 天，休息写在课表里，不算偷懒',km:0};
-  return{t:'rest',label:'休息日',detail:'恢复也是训练的一部分，可以散步或拉伸',km:0};
+function phasePredict(ds){
+  const cs=[...state.cycleStarts].sort();
+  if(!cs.length)return{key:'unset',day:null};
+  const C=state.settings.cycleLen;
+  const diff=dayDiff(p(ds),p(cs[cs.length-1]));
+  if(diff<0)return{key:'unset',day:null};
+  const day=(diff%C)+1;
+  return phaseOfDay(day,C);
 }
 
-/* ---------- onboarding ---------- */
+/* ---------- plan engine (3-race periodization) ---------- */
+function isRaceDate(ds,rs){return rs.some(r=>r.date===ds);}
+function genPlan(){
+  const st=state.settings;
+  const start=monday(p(state.planStart));
+  const map={},weeks=[];
+  const clampN=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v)));
+  const daysPref=st.days||'4-5';
+  const rs=races();
+  const G=st.goal||'fitness';
+  const horizonEnd=(G==='race'&&rs.length)?addD(p(rs[rs.length-1].date),7):addD(new Date(),26*7);
+  const endMon=monday(horizonEnd);
+  const nWeeks=Math.max(4,Math.round((endMon-start)/6048e5)+1);
+  const STRENGTH_NOTE='45 分钟：深蹲 · 单腿硬拉 · 臀桥 · 平板 · 提踵，各 3 组。酸可以，刺痛就停';
+  if(G==='race'&&rs.length){
+    const A=aRace(rs);
+    const AMon=monday(p(A.date));
+    const L0=LEVEL_START[st.level]||5, peak=DIST_PEAK[A.dist]||18;
+    let LB=1;
+    for(let w=1;w<=nWeeks;w++){const mon=addD(start,(w-1)*7);if(Math.round((AMon-mon)/6048e5)===3)LB=w;}
+    const ramp=w=>LB>1?Math.min(peak,L0+(peak-L0)*Math.min(1,(w-1)/Math.max(1,LB-1))):peak;
+    const mid=daysPref!=='2-3', many=daysPref==='6+';
+    for(let w=1;w<=nWeeks;w++){
+      const mon=addD(start,(w-1)*7);
+      const kA=Math.round((AMon-mon)/6048e5);
+      let long=ramp(w),type='build';
+      const cut=(w%4===0)&&(w<LB-1)&&kA>3;
+      if(cut){long*=0.75;type='cutback';}
+      if(kA===3){long=peak;type='peak';}
+      if(kA===2){long=peak*0.7;type='pretaper';}
+      if(kA===1){long=peak*0.45;type='taper';}
+      if(kA===0){long=0;type='race';}
+      if(kA<0){long=Math.max(4,peak*0.4);type='post';}
+      long=Math.round(long);
+      const e1=clampN(long*0.3||3,3,8), q=clampN(long*0.35||4,4,10), sat=clampN(long*0.3||3,3,10);
+      const set=(i,w2)=>{map[f(addD(mon,i))]=w2;};
+      set(1,{t:'easy',km:e1});
+      if(mid)set(2,{t:'strength',min:45,note:STRENGTH_NOTE});
+      const r3=w%3;
+      let qual;
+      if(kA<=1||w<3||type==='post')qual={t:'easy',km:q};
+      else if((A.dist==='trail'||rs.some(x=>x.dist==='trail'))&&r3===1)qual={t:'hill',km:q,note:'上坡 6-8 组 × 90 秒，下坡走回护膝'};
+      else if(A.dist==='5k'||A.dist==='10k')qual=(r3===1?{t:'interval',km:Math.min(q,8),note:'6-8×400m，组间慢跑等长恢复'}:{t:'mp',km:q,note:'中段贴目标配速'});
+      else if(r3===1)qual={t:'hill',km:q,note:'上坡 6 组 × 90 秒，下坡走回'};
+      else if(r3===2)qual={t:'interval',km:Math.min(q,8),note:'6×400m 提最大摄氧量，平路进行'};
+      else qual={t:'mp',km:q,note:'其中 '+Math.max(2,Math.round(q*0.4))+'km 跑马拉松配速'};
+      set(3,qual);
+      if(many)set(4,{t:'easy',km:Math.max(3,Math.round(e1*0.8))});
+      if(mid&&long>0)set(5,{t:'easy',km:sat,note:long>=22?'长距离前一天，轻松就好':''});
+      if(long>0)set(6,{t:'long',km:long});
+      weeks.push({w,type,vol:Math.round(e1+q+(mid?sat:0)+(many?e1:0)+long),long});
+    }
+    /* 每场比赛：比赛日 + 前后保护圈 */
+    rs.forEach(r=>{
+      const d=p(r.date);
+      map[f(d)]={t:'race',km:0,name:r.name,note:'比赛日 · 享受它，你准备好了'};
+      const slots=[[-1,{t:'rest',km:0,note:'赛前休息：明天是 '+r.name}],
+                   [-2,{t:'shake',km:3,note:'赛前激活，抖开就好'}],
+                   [1,{t:'rest',km:0,note:'赛后恢复 48 小时，走路拉伸最好'}],
+                   [2,{t:'rest',km:0,note:'赛后恢复第二天'}]];
+      slots.forEach(([off,w2])=>{const k=f(addD(d,off));if(!isRaceDate(k,rs))map[k]=w2;});
+    });
+  }else{
+    /* 非备赛：滚动课表（减脂 / 柔韧 / 体能） */
+    const daysArr=runDaysOf(daysPref);
+    for(let w=1;w<=nWeeks;w++){
+      const mon=addD(start,(w-1)*7);
+      const wi=w-1;
+      let vol=0;
+      const base=Math.min(55,30+wi*2);
+      let menu;
+      if(G==='fatloss'){
+        menu=st.style==='walkrun'
+          ?[{t:'wr',min:base,note:'快走 3 分钟 + 慢跑 2 分钟，循环'},{t:'strength',min:30,note:'深蹲 · 弓步 · 俯卧撑(跪姿可) · 平板，各 3 组'},{t:'walk',min:45,note:'微喘但能说话的强度'}]
+          :st.style==='run'
+          ?[{t:'easy',km:Math.max(3,Math.round(base/8))},{t:'strength',min:30,note:'下肢 + 核心，各 3 组'},{t:'wr',min:base,note:'1 分钟快 + 2 分钟慢，循环'}]
+          :[{t:'strength',min:35,note:'全身大肌群，12 次力竭的重量'},{t:'cardio',min:base,note:'跑步机 / 单车 / 椭圆机任选'},{t:'core',min:40,note:'核心 15 分钟 + 快走 25 分钟'}];
+      }else if(G==='flex'){
+        const mins=st.style==='45'?45:st.style==='15'?15:30;
+        menu=[{t:'flow',min:mins,note:'呼吸带动身体，慢下来'},{t:'pilates',min:mins,note:'骨盆稳定 + 深层核心'},{t:'hipf',min:mins,note:'久坐者的解药'},{t:'stretch',min:Math.min(mins,30),note:'每个动作停留 45 秒'}];
+      }else{
+        menu=[{t:'strength',min:35,note:'深蹲 · 硬拉 · 推 · 拉，各 3-4 组'},{t:'cardio',min:30,note:'跑 / 骑 / 划船任选'},{t:'core',min:30,note:'平板家族 + 臀桥 + 箭步蹲'},{t:'walk',min:40,note:'户外快走或慢跑，晒晒太阳'}];
+      }
+      daysArr.forEach((wd,idx)=>{
+        const off=(wd-1+7)%7;
+        map[f(addD(mon,off))]={...menu[(idx+wi)%menu.length]};
+        vol+=menu[(idx+wi)%menu.length].km||0;
+      });
+      weeks.push({w,type:'build',vol:Math.round(vol),long:0});
+    }
+  }
+  /* 经期覆盖：预测第 1-2 天排休，关键课挪到相邻日 */
+  const keys=Object.keys(map).sort();
+  keys.forEach(ds=>{
+    const w=map[ds];
+    if(w.t==='race')return;
+    const ph=phasePredict(ds);
+    if(ph.key!=='mens1')return;
+    if(w.t==='long'||w.t==='hill'||w.t==='mp'||w.t==='interval'){
+      const d=p(ds);
+      const alt=[f(addD(d,-1)),f(addD(d,-2)),f(addD(d,1)),f(addD(d,2))].find(kk=>{
+        const q=phasePredict(kk);
+        return q.key!=='mens1'&&(!map[kk]||map[kk].t==='easy')&&!isRaceDate(kk,rs);
+      });
+      if(alt)map[alt]={...w,note:((w.note?w.note+'；':'')+'避开经期第1-2天，从'+ds.slice(5).replace('-','/')+'挪来')};
+    }
+    map[ds]={t:'rest',km:0,note:'经期第 1-2 天 · 休息（预测）'};
+  });
+  /* 自动补课：昨天/前天错过的长距离，近 3 天补上（减量 15%） */
+  const tds=todayStr();
+  for(let i=2;i>=1;i--){
+    const k=f(addD(p(tds),-i));
+    const w=map[k];
+    if(!w||w.t!=='long'||state.overrides[k])continue;
+    if(k<state.planStart)continue;
+    const ci=state.checkins[k];
+    if(ci&&ci.done)continue;
+    let clash=false;
+    for(let j=0;j<3;j++){const c=map[f(addD(p(tds),j))];if(c&&(c.t==='long'||c.t==='race'))clash=true;}
+    if(clash)break;
+    let target=null;
+    for(let j=0;j<3;j++){
+      const cand=f(addD(p(tds),j));
+      if(phasePredict(cand).key==='mens1')continue;
+      if(state.overrides[cand])continue;
+      const cw=map[cand];
+      if(cw&&cw.t!=='easy'&&cw.t!=='rest')continue;
+      target=cand;break;
+    }
+    if(target){
+      map[target]={t:'long',km:Math.max(6,Math.round(w.km*0.85)),note:'自动补 '+k.slice(5).replace('-','/')+' 未完成的长距离，减量 15%'};
+      map[k]={t:'rest',km:0,note:'未完成，已自动顺延'};
+    }
+    break;
+  }
+  /* 疲劳保护：近 3 天平均备战度 < 45 → 下一个长距离自动减量 */
+  const strain=recentStrain();
+  if(strain!=null&&strain<45){
+    const nxt=Object.keys(map).sort().find(d=>d>=tds&&map[d].t==='long');
+    if(nxt)map[nxt]={...map[nxt],km:Math.max(6,Math.round(map[nxt].km*0.85)),
+      note:(map[nxt].note?map[nxt].note+'；':'')+'近几天状态偏低，自动减量 15%'};
+  }
+  return{map,weeks,nWeeks};
+}
+function plannedFor(ds,map){return state.overrides[ds]||map[ds]||{t:'rest',km:0};}
+
+/* ---------- readiness + adjustment ---------- */
+const SLEEP_ADJ=[-18,-6,6,12], WORK_ADJ=[8,0,-8,-16], TIME_MIN=[35,60,90,150], FEEL_ADJ=[6,0,-12,0];
+const SLEEP_TXT=['很差','一般','不错','很好'],WORK_TXT=['轻松','正常','较忙','爆表'],
+      TIME_TXT=['<40分','约1小时','约1.5时','2小时+'],FEEL_TXT=['满血','正常','酸痛乏力','痛经/难受'],
+      WEA_TXT=['舒适','炎热 33°+','雨/恶劣'];
+function advice(ds){
+  const {map}=genPlan();
+  const planned=plannedFor(ds,map);
+  const ph=phaseFor(ds);
+  const ci=state.checkins[ds];
+  if(!ci||ci.sleep==null)return{planned,w:planned,ph,score:null,level:'none',notes:[]};
+  const feel=ci.feel==null?1:ci.feel, wea=ci.weather==null?0:ci.weather;
+  const isRaceDay=['race','event'].includes(planned.t);
+  const notes=[];
+  if(!isRaceDay&&ph.key==='mens1'){
+    notes.push('经期第 1-2 天：不训练。这两天的休息本来就写在课表里，不算欠账');
+    if(feel===3)notes.push('痛经的话热敷、早点睡；第 3 天起看体感再恢复轻松跑');
+    return{planned,w:{t:'rest',km:0},ph,score:10,level:'red',notes};
+  }
+  if(!isRaceDay&&feel===3){
+    notes.push('身体明确在抗议（痛经/很难受）：今天休息，不看其他指标');
+    return{planned,w:{t:'rest',km:0},ph,score:15,level:'red',notes};
+  }
+  let score=Math.max(0,Math.min(100,55+SLEEP_ADJ[ci.sleep]+WORK_ADJ[ci.work]+ph.adj+FEEL_ADJ[feel]));
+  const level=score>=65?'green':score>=40?'amber':'red';
+  let w={...planned};
+  if(ph.key==='mens2')notes.push('经期第 '+ph.day+' 天：可以恢复轻松强度，按体感来');
+  if(ph.key==='overdue')notes.push('经期推迟中，身体处于高负荷相位，先避开高强度');
+  if(ph.key==='lute2')notes.push('黄体期后段，体感偏沉是正常的，配速允许放宽');
+  if(ph.key==='foll'&&(w.t==='mp'||w.t==='hill'||w.t==='long'))notes.push('卵泡期是上强度的黄金窗口，今天的课值得认真跑');
+  if(feel===2)notes.push('酸痛乏力：若是昨天练的延迟酸痛，轻松动一动反而恢复快；若是累，减量执行');
+  if(isRaceDay){
+    notes.push(planned.t==='event'?'活动日：按现场强度来，安全第一，累了就果断降档':'比赛日：前面所有调整都失效，按赛前计划执行，享受它');
+    return{planned,w,ph,score,level:'green',notes};
+  }
+  if(level==='amber'){
+    if(w.t==='long'){const nk=Math.max(8,Math.round(w.km*0.75));notes.push('状态一般：长距离 '+w.km+'km 调整为 '+nk+'km，配速再放慢 20-30 秒');w.km=nk;}
+    else if(w.t==='mp'||w.t==='hill'||w.t==='interval'){w={t:'easy',km:Math.max(3,Math.round((w.km||6)*0.8))};notes.push('状态一般：取消强度段，改为纯轻松跑 '+w.km+'km');}
+    else if(w.t==='strength'||w.t==='cardio'||w.t==='wr'){w={...w,min:Math.max(20,Math.round((w.min||30)*0.7))};notes.push('状态一般：时长减到 '+w.min+' 分钟收工');}
+    else if(w.t==='easy'||w.t==='strides'){const nk=Math.max(4,Math.round(w.km*0.7));if(nk<w.km)notes.push('状态一般：'+w.km+'km 调整为 '+nk+'km');else notes.push('状态一般：保持短距离轻松跑，别加量');w={t:'easy',km:nk};}
+  }else if(level==='red'){
+    if(w.t==='long'){w={t:'rest',km:0};notes.push('状态欠佳：今天不跑。长距离是本周关键课，改天状态好时优先补（可一键顺延）');}
+    else if(w.t!=='rest'){w={t:'rest',km:0};notes.push('状态欠佳：今天休息。休息也是训练的一部分，比硬撑一次更值');}
+  }
+  if(w.km>0){
+    const tmin=TIME_MIN[ci.time],need=w.km*7.6+8;
+    if(need>tmin){
+      const fit=Math.max(0,Math.floor((tmin-8)/7.6));
+      if(fit<4){w={t:'rest',km:0};notes.push('今天时间不足 40 分钟，与其挤一个碎片跑不如彻底休息');}
+      else{
+        if(planned.t==='long'&&fit<planned.km*0.7)notes.push('今天时间只够 '+fit+'km，长距离建议顺延（可一键顺延）');
+        notes.push('时间有限：调整为 '+fit+'km');w.km=fit;
+      }
+    }
+  }
+  if(w.km>0||w.min>0){
+    if(wea===1&&w.km>0)notes.push('🌡 高温：改清晨 6-7 点或日落后跑；或直接进健身房跑步机同量完成，多带水和电解质');
+    if(wea===2){
+      if(w.t==='long'){const nk=Math.round(w.km*0.85);notes.push('🌧 天气恶劣：转室内跑步机，'+w.km+'km 减到 '+nk+'km，坡度调 1% 补偿');w.km=nk;w.note=(w.note?w.note+'；':'')+'室内跑步机';}
+      else if(w.km>0)notes.push('🌧 天气恶劣：转室内。跑步机同量，或换一节 45 分钟力量循环（下雨天正好练力量）');
+    }
+  }
+  return{planned,w,ph,score,level,notes};
+}
+
+/* ---------- rendering ---------- */
+const $=s=>document.querySelector(s);
+function esc(x){return String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+let curView='today';
+function switchView(v){curView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.toggle('on',el.id==='view-'+v));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.body.classList.toggle('on-home',v==='today');
+  window.scrollTo(0,0);
+}
+window.switchView=switchView;
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
+
+let calMode='week',calCur=null,histCur=null,selDay=null,selHist=null,selPlan=null,planDraft=null;
+function render(){
+  const ds=todayStr();
+  renderHome(ds);renderCheckin(ds);renderPlan(ds);renderHistory(ds);renderSettings();
+  save();
+}
+function weekDone(ds){
+  const {map}=genPlan();const mon=monday(p(ds));let done=0,tot=0;
+  for(let i=0;i<7;i++){const k=f(addD(mon,i)),w=plannedFor(k,map);
+    if(w.t!=='rest'){tot++;if(state.checkins[k]&&state.checkins[k].done)done++;}}
+  return '本周已完成 '+done+'/'+tot;
+}
+
+/* ---------- home ---------- */
+function monthStats(y,m){
+  const {map}=genPlan();
+  const ds=todayStr();
+  const daysIn=new Date(y,m+1,0).getDate();
+  let km=0,target=0,doneN=0;
+  for(let dd=1;dd<=daysIn;dd++){
+    const k=f(new Date(y,m,dd));
+    const w=plannedFor(k,map);
+    if(RUN_TYPES.includes(w.t)&&w.km>0)target+=w.km;
+    const ci=state.checkins[k];
+    if(k<=ds&&ci&&ci.done){doneN++;const dk=ci.doneKm!=null?ci.doneKm:(w.km||0);if(RUN_TYPES.includes(ci.doneType||w.t))km+=dk;}
+  }
+  target=Math.round(Math.max(target,km));
+  return{km:Math.round(km),target,pct:target?Math.min(100,Math.round(km/target*100)):0,doneN};
+}
+function renderHome(ds){
+  const a=advice(ds);
+  const ci=state.checkins[ds];
+  const d=p(ds);
+  const eff=a.score==null?a.planned:a.w;
+  const level=a.score==null?(eff.t==='rest'?'red':'green'):(eff.t==='rest'?'red':a.level);
+  const rs=races();
+  const next=rs.find(r=>r.date>=ds);
+  let h='<div class="home">';
+  h+='<div class="home-top"><span class="wordmark"><b>Vela</b><i>RUN · RECOVER</i></span>';
+  h+='<span class="h-count num">'+(next
+    ?esc(next.name)+' <b>T−'+dayDiff(p(next.date),new Date())+'</b>'+(rs.length>1?' · 共'+rs.length+'场':'')
+    :esc({fatloss:'减脂塑形',flex:'柔韧与平衡',fitness:'体能提升'}[state.settings.goal]||'Vela'))+'</span></div>';
+  if(state.settings.cycleOn&&!state.settings.lastPeriod)h+='<div class="banner">在设置（右上角 ⚙︎）填上次月经第一天，解锁周期排课 →</div>';
+  h+='<div class="flip-wrap"><div class="flip" id="flip">';
+  const done=ci&&ci.done, sk=streak();
+  /* -------- front: 极简居中 -------- */
+  h+='<div class="face front">';
+  h+='<p class="h-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日 · 周'+WD[d.getDay()]+'</p>';
+  if(a.ph.key!=='unset')h+='<span class="h-phase'+(a.ph.key==='overdue'?' warn':'')+'">'+phaseEmoji(a.ph.key)+' '+esc(a.ph.name)+'</span>';
+  if(done){
+    const dt=TYPES[ci.doneType]||TYPES.rest;
+    h+='<p class="h-kicker">今天完成了</p>';
+    h+='<div class="done-big">✓ '+esc(ci.doneType==='rest'?'好好休息':dt.label)+(ci.doneKm>0?' <span class="num">'+(ci.doneKm%1?ci.doneKm.toFixed(1):ci.doneKm)+'</span> km':'')+'</div>';
+    if(ci.extras&&ci.extras.length)h+='<div style="margin-top:10px">'+ci.extras.map(e=>'<span class="ex-done">'+(TYPE_EMOJI[e.t]||'✓')+' '+esc((TYPES[e.t]||TYPES.cross).label)+'</span>').join('')+'</div>';
+    if(sk>0)h+='<p class="streak">🔥 连续 '+sk+' 天</p>';
+    h+='<p class="h-quote">'+esc(dailyQuote(level))+'</p>';
+    h+='<div class="extra-row"><button class="chip-btn" onclick="toggleExtras()">'+(extrasOpen?'收起':'＋ 记一笔其他')+'</button>'+(extrasOpen?EXTRAS.map(e=>'<button class="chip-btn" onclick="logExtra(\''+e[0]+'\')">＋'+e[1]+'</button>').join(''):'')+'</div>';
+  }else{
+    h+='<p class="h-kicker">今日 · '+esc(labelFor(eff))+'</p>';
+    if(eff.km>0)h+='<div class="h-goal"><span class="h-km num">'+(eff.km%1?eff.km.toFixed(1):eff.km)+'</span><span class="h-unit">km</span></div>';
+    else if(eff.min)h+='<div class="h-goal"><span class="h-km num">'+eff.min+'</span><span class="h-unit">min</span></div>';
+    else h+='<div class="h-goal"><span class="h-km small">今日休息</span></div>';
+    const pc=paceOf(eff.t);
+    if(pc)h+='<p class="h-type">'+esc(pc)+'</p>';
+    if(eff.note)h+='<p class="h-note">'+esc(eff.note)+'</p>';
+    if(a.score==null&&eff.t!=='rest')h+='<p class="h-note">打卡后会按今天的状态微调</p>';
+    h+='<p class="h-quote">'+esc(dailyQuote(level))+'</p>';
+    h+='<div class="h-btns">';
+    if(eff.t==='rest')h+='<button class="b-navy" onclick="markDone()">✓ 今天好好休息</button>';
+    else if(a.score==null)h+='<button class="b-navy" onclick="switchView(\'checkin\')">✍️ 去打卡</button>';
+    else h+='<button class="b-navy" onclick="markDone()">✓ 完成今日</button>';
+    h+='</div>';
+    h+='<div class="h-links">'+(a.score!=null||eff.t==='rest'?'<button onclick="switchView(\'checkin\')">微调打卡</button>':'')+'<button onclick="flipCard()">为什么是这个安排 ↻</button></div>';
+  }
+  h+='</div>';
+  /* -------- back: THE WHY -------- */
+  h+='<div class="face back">';
+  h+='<p class="why-kicker">THE WHY · 背后的逻辑</p>';
+  if(a.score!=null){
+    h+='<div class="score-line"><span class="sc num">'+a.score+'</span><span class="lv-pill '+a.level+'">'+{green:'绿灯 · 照常练',amber:'黄灯 · 已减量',red:'红灯 · 保护日'}[a.level]+'</span></div>';
+  }
+  const why=[];
+  if(a.ph.key!=='unset')why.push('周期相位：'+a.ph.name+'。'+({mens1:'第 1-2 天硬性休息，不看任何其他指标。',mens2:'经期后段，轻松强度即可。',foll:'雌激素上行、恢复最快，是上强度的黄金窗口。',ovul:'排卵期，正常训练。',lute:'黄体期，维持有氧为主。',lute2:'孕酮高位、核心温度偏高，体感沉是生理性的。',overdue:'推迟中，先按高负荷相位保守处理。'}[a.ph.key]||''));
+  a.notes.forEach(n=>why.push(n));
+  if(a.score==null)why.push('还没打卡：以上是课表默认值。打卡后我会按睡眠、工作、时间、体感和天气五个维度重算今天。');
+  why.push(weekDone(ds));
+  h+='<ul class="why">'+why.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul>';
+  h+='<div class="back-btns">';
+  if(a.planned.t==='long'&&a.score!=null&&(a.w.t==='rest'||a.w.km<a.planned.km*0.7))
+    h+='<button class="b-plum" onclick="postponeLong(\''+ds+'\')">长距离顺延到明天</button>';
+  h+='<button class="b-ghost" onclick="flipCard()">↩ 翻回正面</button>';
+  h+='</div></div>';
+  h+='</div></div>';
+  /* -------- 本月里程 -------- */
+  const ms=monthStats(d.getFullYear(),d.getMonth());
+  h+='<div class="card" style="text-align:center;margin-top:14px"><h2 class="sec">本月里程</h2>';
+  if(ms.target>0){
+    h+='<div class="mile-row"><span class="mile-big num">'+ms.km+'</span><span class="mile-sub num">/ '+ms.target+' km</span></div>';
+    h+='<div class="mile-bar"><i style="width:'+ms.pct+'%"></i></div>';
+    h+='<div class="mile-txt">目标完成 '+ms.pct+'% · 动了 '+ms.doneN+' 天 · <a href="javascript:switchView(\'history\')" style="color:var(--plum)">看历程 →</a></div>';
+  }else{
+    h+='<div class="mile-row"><span class="mile-big num">'+ms.doneN+'</span><span class="mile-sub">天已完成</span></div>';
+    h+='<div class="mile-txt"><a href="javascript:switchView(\'history\')" style="color:var(--plum)">看历程 →</a></div>';
+  }
+  h+='</div>';
+  h+='</div>';
+  $('#view-today').innerHTML=h;
+}
+window.flipCard=function(){const el=$('#flip');if(el)el.classList.toggle('flipped');};
+function celebrate(){
+  try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;}catch(e){}
+  let cv=document.getElementById('confetti');
+  if(!cv){cv=document.createElement('canvas');cv.id='confetti';cv.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99';document.body.appendChild(cv);}
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const cols=['#8E5274','#C7E2F2','#F0DCE7','#2E4256','#E8A0BF','#FFFFFF'];
+  const ps=Array.from({length:100},()=>({x:cv.width/2,y:cv.height*0.42,vx:(Math.random()-0.5)*12,vy:-(Math.random()*10+4),r:Math.random()*5+3,c:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*6}));
+  let t0=null;
+  function step(ts){
+    if(!t0)t0=ts;const el=ts-t0;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.globalAlpha=Math.max(0,1-el/1500);
+    ps.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.vy+=0.26;q.rot+=0.1;
+      ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.rot);ctx.fillStyle=q.c;ctx.fillRect(-q.r,-q.r/2,q.r*2,q.r);ctx.restore();});
+    ctx.globalAlpha=1;
+    if(el<1600)requestAnimationFrame(step);else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  requestAnimationFrame(step);
+}
+function streak(){
+  let n=0,d=p(todayStr());
+  const t=state.checkins[todayStr()];
+  if(!(t&&t.done))d=addD(d,-1);
+  while(true){const c=state.checkins[f(d)];if(c&&c.done){n++;d=addD(d,-1);}else break;}
+  return n;
+}
+const EXTRAS=[['stretch','拉伸'],['strength','力量'],['hike','越野'],['cross','其他']];
+let extrasOpen=false;
+window.toggleExtras=function(){extrasOpen=!extrasOpen;renderHome(todayStr());};
+window.logExtra=function(t){
+  const ds=todayStr();
+  if(!state.checkins[ds])state.checkins[ds]={sleep:1,work:1,time:1,feel:1,weather:0};
+  const ci=state.checkins[ds];
+  ci.extras=(ci.extras||[]);
+  ci.extras.push({t});
+  celebrate();render();
+};
+window.markDone=function(){
+  const ds=todayStr();
+  const a=advice(ds);
+  if(!state.checkins[ds])state.checkins[ds]={sleep:1,work:1,time:1,feel:1,weather:0};
+  const eff=a.score==null?a.planned:a.w;
+  state.checkins[ds].done=true;
+  state.checkins[ds].doneKm=eff.km||0;
+  state.checkins[ds].doneType=eff.t==='rest'?'rest':eff.t;
+  celebrate();
+  render();
+};
+window.postponeLong=function(ds){
+  const {map}=genPlan();
+  const planned=plannedFor(ds,map);
+  const tm=f(addD(p(ds),1));
+  state.overrides[ds]={t:'rest',km:0};
+  state.overrides[tm]={t:'long',km:planned.km,note:'从 '+ds.slice(5).replace('-','/')+' 顺延'};
+  render();
+};
+
+/* ---------- check-in ---------- */
+let draft=null;
+function renderCheckin(ds){
+  const ci=state.checkins[ds];
+  if(!draft)draft={sleep:ci?ci.sleep:null,work:ci?ci.work:null,time:ci?ci.time:null,
+    feel:ci&&ci.feel!=null?ci.feel:null,weather:ci&&ci.weather!=null?ci.weather:null};
+  const ph=phaseFor(ds);
+  const grp=(key,opts,cls)=>'<div class="opts'+(cls||'')+'">'+opts.map((o,i)=>
+    '<button type="button" class="opt'+(draft[key]===i?' sel':'')+'" onclick="pick(\''+key+'\','+i+')">'+o+'</button>').join('')+'</div>';
+  let h='<p class="page-title">调整今天</p><div class="card">';
+  h+='<h2 class="sec">Check-in · '+ds.slice(5).replace('-','/')+'</h2>';
+  h+='<div class="q"><label class="t">昨晚睡得怎么样</label>'+grp('sleep',SLEEP_TXT)+'</div>';
+  h+='<div class="q"><label class="t">今天工作强度</label>'+grp('work',WORK_TXT)+'</div>';
+  h+='<div class="q"><label class="t">今天能挤出的训练时间</label>'+grp('time',TIME_TXT)+'</div>';
+  h+='<div class="q"><label class="t">今日体感</label>'+grp('feel',FEEL_TXT);
+  if(draft.feel===3&&ph.key!=='mens1'&&ph.key!=='mens2')h+='<p class="hint" style="margin-top:8px">是经期第一天吗？记得同时点下方「🩸 今天来了」——那才会重排整张课表，体感只调整今天。</p>';
+  h+='</div>';
+  h+='<div class="q"><label class="t">今天天气</label>'+grp('weather',WEA_TXT,' o3')+'</div>';
+  h+='<div class="q"><label class="t">生理期</label>';
+  h+='<p class="period-line">当前判断：<b>'+phaseEmoji(ph.key)+' '+esc(ph.name)+'</b></p>';
+  h+='<div class="btnrow" style="margin-top:0">';
+  const isStartToday=state.cycleStarts.includes(ds);
+  if(isStartToday)h+='<button class="b-ghost" onclick="undoStart(\''+ds+'\')">撤销「今天来了」</button>';
+  else h+='<button class="b-sec" onclick="periodStart(\''+ds+'\')">🩸 今天来了（第1天）</button>';
+  if(ph.key==='overdue'||ph.key==='lute2')h+='<button class="b-ghost" onclick="periodLate(\''+ds+'\')">还没来（推迟）</button>';
+  h+='</div><p class="hint">「今天来了」会立刻重排后续相位和课表；推迟则顺延预测。</p></div>';
+  const ok=['sleep','work','time','feel','weather'].every(k=>draft[k]!=null);
+  h+='<div class="btnrow"><button class="b-pri" style="'+(ok?'':'opacity:.4')+'"'+(ok?'':' disabled')+' onclick="saveCheckin()">保存，看今天怎么练 →</button></div>';
+  h+='</div>';
+  $('#view-checkin').innerHTML=h;
+}
+window.pick=function(k,i){draft[k]=i;renderCheckin(todayStr());};
+window.saveCheckin=function(){
+  if(['sleep','work','time','feel','weather'].some(k=>draft[k]==null))return;
+  const ds=todayStr();
+  const prev=state.checkins[ds]||{};
+  state.checkins[ds]={...prev,...draft};
+  draft=null;render();switchView('today');
+};
+window.periodStart=function(ds){
+  if(!state.cycleStarts.includes(ds))state.cycleStarts.push(ds);
+  state.settings.lastPeriod=ds;render();
+};
+window.undoStart=function(ds){state.cycleStarts=state.cycleStarts.filter(x=>x!==ds);render();};
+window.periodLate=function(ds){if(!state.overdueChecks.includes(ds))state.overdueChecks.push(ds);render();};
+
+/* ---------- calendar helpers ---------- */
+function calGrid(cur,cellFn){
+  const y=cur.getFullYear(),m=cur.getMonth();
+  const first=new Date(y,m,1);
+  const startIdx=(first.getDay()+6)%7;
+  const days=new Date(y,m+1,0).getDate();
+  let h='<div class="cal">';
+  ['一','二','三','四','五','六','日'].forEach(w=>h+='<div class="wdh">'+w+'</div>');
+  for(let i=0;i<startIdx;i++)h+='<div></div>';
+  for(let dd=1;dd<=days;dd++)h+=cellFn(f(new Date(y,m,dd)),dd);
+  h+='</div>';
+  return h;
+}
+
+/* ---------- plan view ---------- */
+function renderPlan(ds){
+  const {map}=genPlan();
+  if(!calCur)calCur=new Date(p(ds).getFullYear(),p(ds).getMonth(),1);
+  let h='<p class="page-title">课表</p><div class="card">';
+  h+='<div class="seg"><button class="'+(calMode==='week'?'on':'')+'" onclick="setCalMode(\'week\')">周视图</button><button class="'+(calMode==='month'?'on':'')+'" onclick="setCalMode(\'month\')">月视图</button></div>';
+  if(calMode==='week'){
+    const mon=monday(p(ds));
+    h+='<div class="cal-head"><span class="cal-title">'+(mon.getMonth()+1)+'/'+mon.getDate()+' 这一周</span><span class="hint" style="margin:0">点某天可手动改</span></div>';
+    for(let i=0;i<7;i++){
+      const d=addD(mon,i),k=f(d);
+      let w=plannedFor(k,map),adjNote='';
+      if(k===ds){
+        const a=advice(ds);
+        if(a.score!=null&&(a.w.t!==a.planned.t||a.w.km!==a.planned.km)){w=a.w;adjNote='已按今日打卡调整';}
+      }
+      const t=TYPES[w.t]||TYPES.rest;
+      const done=state.checkins[k]&&state.checkins[k].done;
+      const past=k<ds&&!done&&w.t!=='rest';
+      h+='<div class="day-row'+(k===ds?' is-today':'')+(past?' dim':'')+(k===selPlan?' is-today':'')+'" onclick="editDay(\''+k+'\')">';
+      h+='<span class="dt">'+k.slice(5).replace('-','/')+' 周'+WD[d.getDay()]+'</span>';
+      h+='<span class="nm">'+(done?'✓ ':'')+esc(labelFor(w))+(w.manual?' ✎':'')+((w.note||adjNote)?'<small>'+esc(adjNote||w.note)+'</small>':'')+'</span>';
+      h+='<span class="km num">'+(w.km>0?w.km+' km':(w.min?w.min+' min':'—'))+'</span></div>';
+    }
+    if(selPlan){
+      const cur=plannedFor(selPlan,map);
+      if(!planDraft)planDraft={t:cur.t,km:cur.km||'',note:cur.note||''};
+      const ET=[['easy','轻松跑'],['long','长距离'],['interval','间歇'],['hill','坡度'],['mp','马配'],['strength','力量'],['event','活动/赛'],['rest','休息']];
+      h+='<div style="margin-top:14px;border:1.5px solid #D9BFE5;border-radius:16px;padding:14px">';
+      h+='<h2 class="sec">编辑 '+selPlan.slice(5).replace('-','/')+' 周'+WD[p(selPlan).getDay()]+'</h2>';
+      h+='<div class="opts" style="grid-template-columns:repeat(4,1fr)">'+ET.map(e=>'<button type="button" class="opt'+(planDraft.t===e[0]?' sel':'')+'" onclick="pdType(\''+e[0]+'\')">'+e[1]+'</button>').join('')+'</div>';
+      h+='<div class="btnrow" style="align-items:center">';
+      h+='<input id="pd-km" type="number" inputmode="decimal" placeholder="km" value="'+esc(planDraft.km)+'" style="width:80px;font:inherit;font-weight:600;padding:10px 12px;border:1.5px solid var(--pink);border-radius:12px">';
+      h+='<input id="pd-note" type="text" placeholder="备注（如：越野模拟赛）" value="'+esc(planDraft.note)+'" style="flex:1;font:inherit;font-weight:600;padding:10px 12px;border:1.5px solid var(--pink);border-radius:12px">';
+      h+='</div><div class="btnrow">';
+      h+='<button class="b-pri" style="flex:0 1 auto" onclick="savePlanEdit()">保存</button>';
+      h+='<button class="b-ghost" onclick="clearPlanEdit()">恢复默认</button>';
+      h+='<button class="b-ghost" onclick="cancelPlanEdit()">取消</button></div>';
+      h+='<p class="hint">改完后引擎照常围着它转：被顶掉的长距离没完成会自动在近 3 天补课（减量 15%），后续每天照常按打卡微调。</p></div>';
+    }
+  }else{
+    h+='<div class="cal-head"><span class="cal-title">'+calCur.getFullYear()+' 年 '+(calCur.getMonth()+1)+' 月</span>';
+    h+='<span class="cal-nav"><button onclick="calNav(-1)">‹</button> <button onclick="calNav(1)">›</button></span></div>';
+    h+=calGrid(calCur,(k,dd)=>{
+      const w=plannedFor(k,map);
+      const ci=state.checkins[k];
+      const mens=phasePredict(k).key==='mens1';
+      const isRace=['race','event'].includes(w.t);
+      if(ci&&ci.done){
+        const bg=TYPE_INK[ci.doneType]||'#5E82A6';
+        let c='<div class="cell fill'+(k===todayStr()?' today':'')+'" style="background:'+bg+'" onclick="selCal(\''+k+'\')">';
+        c+='<div class="dn num">'+dd+'</div>';
+        c+='<div class="em">'+(TYPE_EMOJI[ci.doneType]||'✓')+'</div>';
+        c+='<div class="klabel num">'+(ci.doneKm>0?(ci.doneKm%1?ci.doneKm.toFixed(1):ci.doneKm)+'k':'✓')+'</div>';
+        if(ci.extras&&ci.extras.length)c+='<div class="plus">+'+ci.extras.length+'</div>';
+        c+='</div>';
+        return c;
+      }
+      const ink=TYPE_INK[w.t]||'#C9CDD6';
+      let c='<div class="cell'+(k===todayStr()?' today':'')+'" onclick="selCal(\''+k+'\')">';
+      c+='<div class="dn num">'+dd+'</div>';
+      if(isRace)c+='<div class="ind" style="color:'+ink+'">★</div>';
+      else if(w.km>0)c+='<div class="ind num" style="color:'+ink+'">'+w.km+'</div>';
+      else if(w.min)c+='<div class="ind" style="color:'+ink+'">H</div>';
+      else c+='<div class="ind" style="color:#D9D2DC">·</div>';
+      if(mens)c+='<span class="mens"></span>';
+      c+='</div>';
+      return c;
+    });
+    h+='<div class="legend"><span><i style="background:#8E5274"></i>长距离/强度</span><span><i style="background:#5E82A6"></i>轻松跑</span><span><i style="background:#2E4256"></i>力量/交叉</span><span><i style="background:#C95C7E"></i>预测经期</span><span>★ 比赛</span></div>';
+    if(selDay){
+      const w=plannedFor(selDay,map);
+      const t=TYPES[w.t]||TYPES.rest;
+      h+='<div class="sel-detail"><b>'+selDay.slice(5).replace('-','/')+' 周'+WD[p(selDay).getDay()]+' · '+esc(labelFor(w))+(w.km>0?' '+w.km+'km':'')+'</b>'+(w.note?'<br>'+esc(w.note):'')+(paceOf(w.t)?'<br>'+esc(paceOf(w.t)):'')+'</div>';
+    }
+  }
+  h+='<p class="hint"><b>你的配速表</b>：轻松跑 '+esc((LEVEL_PACE[state.settings.level]||LEVEL_PACE['5']).easy)+' · 长距离 '+esc((LEVEL_PACE[state.settings.level]||LEVEL_PACE['5']).long)+' · 马配 '+esc((LEVEL_PACE[state.settings.level]||LEVEL_PACE['5']).mp)+' · 间歇 '+esc((LEVEL_PACE[state.settings.level]||LEVEL_PACE['5']).int)+'。<br>打卡影响课表的四条通道：① 当天课立即调整；② 「今天来了」重排整个周期；③ 错过的长距离自动在近 3 天补上；④ 近 3 天状态持续偏低，下一个长距离自动减量。手动改过的天标 ✎。</p>';
+  h+='</div>';
+  $('#view-plan').innerHTML=h;
+}
+window.setCalMode=function(m){calMode=m;selDay=null;selPlan=null;renderPlan(todayStr());};
+window.calNav=function(n){calCur=addM(calCur,n);selDay=null;renderPlan(todayStr());};
+window.selCal=function(k){selDay=k;renderPlan(todayStr());};
+window.editDay=function(k){selPlan=(selPlan===k?null:k);planDraft=null;renderPlan(todayStr());};
+window.pdType=function(t){
+  planDraft.km=$('#pd-km')?$('#pd-km').value:planDraft.km;
+  planDraft.note=$('#pd-note')?$('#pd-note').value:planDraft.note;
+  planDraft.t=t;renderPlan(todayStr());
+};
+window.savePlanEdit=function(){
+  if(!selPlan)return;
+  const km=Number($('#pd-km').value)||0;
+  const note=$('#pd-note').value||'';
+  state.overrides[selPlan]={t:planDraft.t,km:planDraft.t==='rest'?0:km,note,manual:true};
+  selPlan=null;planDraft=null;render();
+};
+window.clearPlanEdit=function(){if(selPlan)delete state.overrides[selPlan];selPlan=null;planDraft=null;render();};
+window.cancelPlanEdit=function(){selPlan=null;planDraft=null;renderPlan(todayStr());};
+
+/* ---------- history ---------- */
+function renderHistory(ds){
+  const {map}=genPlan();
+  if(!histCur)histCur=new Date(p(ds).getFullYear(),p(ds).getMonth(),1);
+  const y=histCur.getFullYear(),m=histCur.getMonth();
+  let km=0,doneN=0,plannedN=0,longest=0,strengthN=0;
+  const daysIn=new Date(y,m+1,0).getDate();
+  for(let dd=1;dd<=daysIn;dd++){
+    const k=f(new Date(y,m,dd));
+    if(k>ds)continue;
+    const w=plannedFor(k,map);
+    const ci=state.checkins[k];
+    const isSession=(w.km>0||w.min);
+    if(isSession)plannedN++;
+    if(ci&&ci.done){
+      doneN++;
+      const dk=ci.doneKm!=null?ci.doneKm:(w.km||0);
+      const dt=ci.doneType||w.t;
+      if(RUN_TYPES.includes(dt)){km+=dk;longest=Math.max(longest,dk);}
+      if(dt==='strength'||dt==='cross')strengthN++;
+      (ci.extras||[]).forEach(e=>{if(e.t==='strength'||e.t==='cross')strengthN++;});
+    }
+  }
+  const rate=plannedN?Math.min(100,Math.round(doneN/plannedN*100)):(doneN?100:0);
+  /* monthly run-km target = planned run km across the whole month */
+  let targetKm=0;
+  for(let dd=1;dd<=daysIn;dd++){
+    const k=f(new Date(y,m,dd));
+    const w=plannedFor(k,map);
+    if(RUN_TYPES.includes(w.t)&&w.km>0)targetKm+=w.km;
+  }
+  targetKm=Math.round(Math.max(targetKm,km));
+  const pct=targetKm?Math.min(100,Math.round(km/targetKm*100)):0;
+  const next=races().find(r=>r.date>=ds);
+  let h='<p class="page-title">历程</p>';
+  h+='<div class="poster">';
+  h+='<div class="p-head"><div class="p-script">'+esc(dailySlogan('green'))+'</div>';
+  h+='<div class="p-month">'+MONTH_EN[m]+'</div>';
+  h+='<div class="p-hero num"><b>'+Math.round(km)+'</b><span>/ '+targetKm+' km</span></div>';
+  h+='<div class="p-bar"><i style="width:'+pct+'%"></i></div>';
+  h+='<div class="p-total">本月跑量目标完成 <b class="num" style="font-size:20px">'+pct+'%</b> · 动了 <b class="num" style="font-size:20px">'+doneN+'</b> 天</div>';
+  h+='<div class="p-sub num">'+y+' · VELA · RUN + RECOVER</div></div>';
+  h+='<div class="p-body">';
+  h+=calGrid(histCur,(k,dd)=>{
+    const w=plannedFor(k,map);
+    const ci=state.checkins[k];
+    const done=ci&&ci.done;
+    const isSession=(w.km>0||w.min);
+    const isRace=['race','event'].includes(w.t);
+    if(done){
+      const dk=ci.doneKm!=null?ci.doneKm:(w.km||0);
+      const dt=ci.doneType||w.t;
+      const bg=TYPE_INK[dt]||'#5E82A6';
+      let c='<div class="cell fill'+(k===selHist?' today':'')+'" style="background:'+bg+'" onclick="histSel(\''+k+'\')">';
+      c+='<div class="dn num">'+dd+'</div>';
+      c+='<div class="em">'+(TYPE_EMOJI[dt]||'✓')+'</div>';
+      c+='<div class="klabel num">'+(dk>0?(dk%1?dk.toFixed(1):dk)+'k':'✓')+'</div>';
+      if(ci.extras&&ci.extras.length)c+='<div class="plus">+'+ci.extras.length+'</div>';
+      c+='</div>';
+      return c;
+    }
+    let c='<div class="cell'+(k===ds?' today':'')+(k===selHist?' today':'')+'"'+(k<=ds?' onclick="histSel(\''+k+'\')"':'')+'><div class="dn num">'+dd+'</div>';
+    if(k<ds&&isSession)c+='<div class="p-mark miss">·</div>';
+    else if(k>=ds&&isRace)c+='<div class="p-mark future" style="color:#8E5274">★</div>';
+    else if(k>=ds&&isSession)c+='<div class="p-mark future">'+(w.km||'·')+'</div>';
+    c+='</div>';
+    return c;
+  });
+  h+='<div class="p-stats">';
+  h+='<div class="p-stat"><div class="v num">'+Math.round(longest)+'</div><div class="k">最长一次 KM</div></div>';
+  h+='<div class="p-stat"><div class="v num">'+rate+'%</div><div class="k">完成率</div></div>';
+  h+='<div class="p-stat"><div class="v num">'+strengthN+'</div><div class="k">力量 / 交叉</div></div>';
+  h+='<div class="p-stat"><div class="v num">'+streak()+'</div><div class="k">🔥 连续天数</div></div>';
+  h+='</div></div>';
+  h+='<div class="p-foot"><span class="wm">Vela</span><span>'+(next?esc(next.name).toUpperCase()+' T−'+dayDiff(p(next.date),new Date()):'')+'</span></div>';
+  h+='</div>';
+  h+='<div class="btnrow" style="justify-content:space-between"><button class="b-ghost" onclick="histNav(-1)">‹ 上个月</button><button class="b-ghost" onclick="histNav(1)">下个月 ›</button></div>';
+  if(selHist){
+    const ci=state.checkins[selHist];
+    h+='<div class="card"><h2 class="sec">补记 '+selHist.slice(5).replace('-','/')+' 周'+WD[p(selHist).getDay()]+'</h2>';
+    if(ci&&ci.done)h+='<p class="hint" style="margin-top:0;font-size:14px;color:var(--ink)"><b>那天：'+(TYPE_EMOJI[ci.doneType]||'✓')+' '+esc((TYPES[ci.doneType]||TYPES.easy).label)+(ci.doneKm?' '+ci.doneKm+' km':'')+'</b>'+(ci.extras&&ci.extras.length?'，另加 '+ci.extras.map(e=>esc((TYPES[e.t]||TYPES.cross).label)).join('、'):'')+'</p>';
+    else h+='<p class="hint" style="margin-top:0">那天没有记录。'+(plannedFor(selHist,map).km>0?'原计划：'+esc((TYPES[plannedFor(selHist,map).t]||TYPES.rest).label)+' '+plannedFor(selHist,map).km+'km。':'')+'可以在下面补记。</p>';
+    h+='<div class="btnrow" style="margin-top:8px;align-items:center">';
+    h+='<input id="bf-km" type="number" inputmode="decimal" placeholder="km" style="width:90px;font:inherit;font-weight:600;padding:10px 12px;border:1.5px solid var(--pink);border-radius:12px">';
+    h+='<button class="b-pri" style="flex:0 1 auto" onclick="bfRun()">记跑步</button>';
+    h+='<button class="b-sec" onclick="bfStrength()">记力量</button>';
+    h+='<button class="b-ghost" onclick="bfClear()">清除</button></div>';
+    h+='<p class="hint">补记会计入月度统计，也让引擎知道那天已经练过（不会再自动补课）。</p></div>';
+  }
+  h+='<p class="hint" style="text-align:center">🏃‍♀️ 跑步 · ⛰️ 越野跑（都计入跑量，数字 = 公里）· 💪 力量/交叉 · 🧘‍♀️ 拉伸 · 😴 休息好 · 🏁 比赛 · +n = 当天加练<br>虚线圈 = 错过 · 浅字 = 计划中 · <b>点任意过去的日期可补记</b> · 截图即可分享 ✨</p>';
+  $('#view-history').innerHTML=h;
+}
+window.histNav=function(n){histCur=addM(histCur,n);selHist=null;renderHistory(todayStr());};
+window.histSel=function(k){selHist=(selHist===k?null:k);renderHistory(todayStr());};
+function bfSet(ds,d){
+  const prev=state.checkins[ds]||{sleep:1,work:1,time:1,feel:1,weather:0};
+  state.checkins[ds]={...prev,done:true,backfill:true,...d};
+  selHist=null;render();
+}
+window.bfRun=function(){
+  if(!selHist)return;
+  const km=Number($('#bf-km').value)||0;
+  if(km<=0){alert('先填公里数');return;}
+  bfSet(selHist,{doneKm:km,doneType:km>=10?'long':'easy'});
+};
+window.bfStrength=function(){if(selHist)bfSet(selHist,{doneKm:0,doneType:'strength'});};
+window.bfClear=function(){if(!selHist)return;delete state.checkins[selHist];selHist=null;render();};
+
+/* ---------- settings ---------- */
+function renderSettings(){
+  const st=state.settings;
+  const chip=(cur,v,label,fn)=>'<button type="button" class="opt'+(cur===v?' sel':'')+'" onclick="'+fn+'(\''+v+'\')">'+label+'</button>';
+  let h='<p class="page-title">设置</p><div class="card frm"><h2 class="sec">训练频率（随时可改）</h2>';
+  h+='<div class="opts o3">'+[['2-3','每周 2-3 天'],['4-5','每周 4-5 天'],['6+','尽量每天']].map(x=>chip(st.days,x[0],x[1],'setDays')).join('')+'</div>';
+  h+='<p class="hint">改完立即重排整张课表：天数越多，周中会自动加入力量循环和额外轻松跑。</p>';
+  h+='<h2 class="sec" style="margin-top:20px">当前水平</h2>';
+  h+='<div class="opts">'+[['3','3km 内'],['5','5km'],['10','10km'],['15','15km+']].map(x=>chip(st.level,x[0],x[1],'setLevel')).join('')+'</div>';
+  h+='<p class="hint">决定配速表和长距离起点。</p>';
+  if(st.goal==='race'){
+    h+='<h2 class="sec" style="margin-top:20px">我的赛程</h2>';
+    (st.races||[]).forEach((r,i)=>{
+      h+='<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">';
+      h+='<input type="text" value="'+esc(r.name||'')+'" placeholder="比赛名" style="flex:1" onchange="raceEdit('+i+',\'name\',this.value)">';
+      h+='<select onchange="raceEdit('+i+',\'dist\',this.value)" style="font:inherit;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:#fff">'+
+        ['5k','10k','half','full','trail'].map(dd=>'<option value="'+dd+'"'+(r.dist===dd?' selected':'')+'>'+DIST_NAME[dd]+'</option>').join('')+'</select>';
+      h+='<input type="date" value="'+esc(r.date||'')+'" style="width:150px" onchange="raceEdit('+i+',\'date\',this.value)">';
+      h+='<button type="button" class="b-ghost" style="padding:8px 12px" onclick="raceDel('+i+')">✕</button></div>';
+    });
+    h+='<div class="btnrow" style="margin-top:4px"><button class="b-sec" onclick="raceAdd()">＋ 添加比赛</button></div>';
+    h+='<p class="hint">改日期或增删比赛，课表按新赛程立即倒推重排。</p>';
+  }
+  h+='<h2 class="sec" style="margin-top:20px">生理周期</h2>';
+  h+='<div class="opts" style="grid-template-columns:1fr 1fr">'+chip(st.cycleOn?'on':'off','on','开启 🌙','setCycleOn')+chip(st.cycleOn?'on':'off','off','关闭','setCycleOn')+'</div>';
+  if(st.cycleOn){
+    h+='<label for="in-cyc">平均周期（天）</label><input id="in-cyc" type="number" inputmode="numeric" value="'+st.cycleLen+'" onchange="setCycLen(this.value)">';
+    h+='<label for="in-lp">上次月经第一天</label><input id="in-lp" type="date" value="'+(st.lastPeriod||'')+'" onchange="setLastP(this.value)">';
+    h+='<p class="hint">之后不用改这里：每天打卡里点「今天来了」即可自动校准。</p>';
+  }
+  h+='</div>';
+  if(state.code){
+    h+='<div class="card"><h2 class="sec">恢复码</h2>';
+    h+='<div style="font-size:24px;font-weight:800;letter-spacing:.08em;font-family:ui-monospace,monospace">'+esc(state.code)+'</div>';
+    h+='<p class="hint">数据自动同步云端。换手机或清缓存后，在欢迎页点「找回我的数据」输入它即可全部找回。抄下来，别公开。'+(state.syncedAt?'<br>上次同步：'+new Date(state.syncedAt).toLocaleString():'')+'</p></div>';
+  }
+  h+='<div class="card"><h2 class="sec">数据</h2>';
+  h+='<div class="btnrow" style="margin-top:0"><button class="b-sec" onclick="exportData()">导出</button><button class="b-ghost" onclick="importData()">导入</button><button class="b-ghost" onclick="restartOB()">重新设定目标</button></div>';
+  h+='<textarea id="io" placeholder="导出后复制保存；导入时把 JSON 粘到这里再点导入"></textarea>';
+  h+='<p class="hint">「重新设定目标」会重新走一遍引导，打卡记录和恢复码保留。</p></div>';
+  $('#view-settings').innerHTML=h;
+}
+window.setDays=function(v){state.settings.days=v;save();render();};
+window.setLevel=function(v){state.settings.level=v;save();render();};
+window.setCycleOn=function(v){state.settings.cycleOn=(v==='on');save();render();};
+window.setCycLen=function(v){state.settings.cycleLen=Math.min(45,Math.max(20,Number(v)||28));save();render();};
+window.setLastP=function(v){if(v){state.settings.lastPeriod=v;state.cycleStarts=[v];state.overdueChecks=[];}save();render();};
+window.raceEdit=function(i,k,v){if(state.settings.races[i]){state.settings.races[i][k]=v;save();render();switchView('settings');}};
+window.raceDel=function(i){state.settings.races.splice(i,1);save();render();switchView('settings');};
+window.raceAdd=function(){state.settings.races.push({name:'',dist:'half',date:f(addD(new Date(),84))});save();render();switchView('settings');};
+window.restartOB=function(){state.settings={...DEFAULTS};save();OB.i=0;OB.a={};boot();};
+window.exportData=function(){$('#io').value=JSON.stringify(state);$('#io').select();try{document.execCommand('copy');}catch(e){}};
+window.importData=function(){
+  try{const s2=JSON.parse($('#io').value);
+    if(s2&&s2.settings){state=s2;state.settings={...DEFAULTS,...s2.settings};save();render();switchView('today');}
+  }catch(e){alert('JSON 格式不对，检查一下粘贴内容');}
+};
+
+
+/* ==================== 引导 & AI & 云同步 ==================== */
+const API='https://vela-api-coral.vercel.app';
+const DSKB='NTEyOTJhNzBhZjhjZjE2YmU1NDRkMmU2YmVlYjM1ZDcta3M=';
+function dsk(){return atob(DSKB).split('').reverse().join('');}
+function withTimeout(pr,ms,tag){
+  return Promise.race([pr,new Promise(function(_,rej){setTimeout(function(){rej(new Error(tag+'超时'));},ms);})]);
+}
+function aiSys(){
+  const today=f(new Date());
+  return '你是女性训练 App「Vela」的教练解析器。用户是备赛跑者，未来半年可能有多场比赛。把她的描述按固定五个维度完整解析为严格 JSON（不要输出任何其他内容）：\n{\n "recent": "…",   // 维度①当前水平：最近跑步表现原样完整提取并算出配速，如"8km 56分(7:00/km)"；没提就空串\n "races": [{"name":"深圳半马","dist":"5k|10k|half|full|trail","date":"YYYY-MM-DD"}],\n                   // 维度②赛程表：提到的所有比赛一场不漏全部列出，按时间排序。日期模糊(如11月底)取该月最后一个周日；没说名字则 name 留空。今天是 '+today+'\n "days": "2-3|4-5|6+",   // 维度③训练频率，未知给"2-3"\n "target": "…",   // 维度④目标：成绩/完赛目标一句话\n "notes": "…",    // 维度⑤约束：伤病、时间限制等一句话，无则空串\n "level": "3|5|10|15",   // 依据 recent 推档：配速>7:30或只能跑3km给"3"；能跑5km给"5"；能跑10km或5km配速<6:00给"10"；能跑15km+给"15"，未知给"5"\n "coach": "…"     // 温暖专业的教练回应(45字内)：必须引用她的具体数据，多场比赛要点出"共N场"的备赛节奏\n}';
+}
+async function aiParse(text){
+  try{
+    const r=await withTimeout(fetch('https://api.deepseek.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+dsk()},
+      body:JSON.stringify({model:'deepseek-chat',temperature:0.2,max_tokens:500,
+        response_format:{type:'json_object'},
+        messages:[{role:'system',content:aiSys()},{role:'user',content:text}]})}),15000,'直连');
+    if(!r.ok)throw new Error('ds '+r.status);
+    const d=await withTimeout(r.json(),8000,'读取');
+    return JSON.parse(d.choices[0].message.content);
+  }catch(e){
+    const r=await withTimeout(fetch(API+'/api/ai',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}),10000,'中转');
+    if(!r.ok)throw new Error('网络不给力');
+    return withTimeout(r.json(),8000,'读取');
+  }
+}
+/* ---- 恢复码 & 云同步 ---- */
+function genCode(){
+  const CS='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const four=()=>Array.from({length:4},()=>CS[Math.floor(Math.random()*CS.length)]).join('');
+  return 'VELA-'+four()+'-'+four();
+}
+let syncT=null;
+function cloudPush(){
+  if(!state.code||!state.settings.goal)return;
+  clearTimeout(syncT);
+  syncT=setTimeout(()=>{
+    fetch(API+'/api/u/'+state.code,{method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({profile:{...state.settings,planStart:state.planStart},
+        checkins:state.checkins,overrides:state.overrides,
+        cycleStarts:state.cycleStarts,overdueChecks:state.overdueChecks})})
+      .then(r=>{if(r.ok){state.syncedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}})
+      .catch(()=>{});
+  },2500);
+}
+async function cloudPull(){
+  if(!state.code)return;
+  try{
+    const r=await fetch(API+'/api/u/'+state.code);
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.updatedAt>(state.updatedAt||0)&&d.profile){
+      state.settings={...DEFAULTS,...d.profile};
+      state.planStart=d.profile.planStart||state.planStart;
+      state.checkins={...state.checkins,...(d.checkins||{})};
+      state.overrides={...state.overrides,...(d.overrides||{})};
+      if(d.cycleStarts&&d.cycleStarts.length)state.cycleStarts=d.cycleStarts;
+      if(d.overdueChecks)state.overdueChecks=d.overdueChecks;
+      state.updatedAt=d.updatedAt;
+      save();render();
+    }
+  }catch(e){}
+}
+/* ---- 引导流程 ---- */
 const OB={i:0,a:{}};
 function obSteps(){
   const a=OB.a;
@@ -342,9 +1265,9 @@ function obSteps(){
       {v:'30',e:'🌿',l:'30 分钟',s:'刚刚好'},
       {v:'45',e:'🌊',l:'45 分钟',s:'完整一节课'}]});
   }
-  steps.push({id:'days',type:'chips',title:'每周能安排几天训练？',sub:'诚实一点，可持续比雄心重要。',opts:[
+  steps.push({id:'days',type:'chips',title:'每周能安排几天训练？',sub:'之后在设置里随时可以改。',opts:[
     {v:'2-3',e:'🌤',l:'2-3 天'},{v:'4-5',e:'⛅️',l:'4-5 天'},{v:'6+',e:'🌞',l:'尽量每天'}]});
-  steps.push({id:'cycle',type:'chips',title:'要按月经周期智能排课吗？',sub:'经期前两天自动休息，状态黄金期安排关键训练。数据只存在你自己的手机里。',opts:[
+  steps.push({id:'cycle',type:'chips',title:'要按月经周期智能排课吗？',sub:'经期前两天自动休息，状态黄金期安排关键训练。数据只存在你自己的设备里。',opts:[
     {v:'on',e:'🌙',l:'好，开启',s:'推荐女生开启'},{v:'off',e:'⏭️',l:'跳过'}]});
   if(a.cycle==='on'){
     steps.push({id:'cyclelast',type:'date',title:'上次月经第一天大概是哪天？',sub:'记不清就选个大概，之后每次来的时候点一下就会自动校准。',cta:'好了'});
@@ -356,11 +1279,10 @@ function obSteps(){
 }
 function renderOB(){
   const steps=obSteps();
-  if(OB.i>=steps.length)return;
+  if(OB.i>=steps.length)OB.i=steps.length-1;
   const st=steps[OB.i];
-  const total=steps.length;
   let h='<div class="ob-wrap">';
-  h+='<div class="ob-dots">'+steps.map((s,i)=>'<i class="'+(i<=OB.i?'on':'')+'"></i>').join('')+'</div>';
+  h+='<div class="ob-dots">'+steps.map((x,i)=>'<i class="'+(i<=OB.i?'on':'')+'"></i>').join('')+'</div>';
   if(OB.i>0&&st.type!=='gen')h+='<button class="ob-back" onclick="obBack()">‹ 上一步</button>';
   h+='<div class="ob-body"><div class="ob-step">';
   if(st.type==='gen'){
@@ -381,27 +1303,23 @@ function renderOB(){
     }else{
       h+='<button class="ob-cta" onclick="obNext()">'+esc(st.cta)+'</button>';
       if(st.id==='hi'){
-        h+='<div class="ob-links">';
-        h+='<button class="ob-link" onclick="obRestoreStart()">已有恢复码？找回我的数据</button></div>';
-        h+='<p style="text-align:center;color:#C9C4CC;font-size:11px;margin-top:18px">build 14</p>';
+        h+='<div class="ob-links"><button class="ob-link" onclick="obRestoreStart()">已有恢复码？找回我的数据</button></div>';
+        h+='<p style="text-align:center;color:#C9BFC9;font-size:11px;margin-top:18px">build 15</p>';
       }
     }
   }
   h+='</div></div></div>';
   $('#ob').innerHTML=h;
   if(st.type==='gen'){
-    let done=false;
+    let doneF=false;
     const fail=e=>{
       $('#ob').innerHTML='<div class="ob-wrap"><div class="ob-body"><div class="ob-step">'+
         '<div class="ob-title">哎呀，出了点小问题</div>'+
-        '<p class="ob-sub">'+esc((e&&e.message)||'生成超时')+'。点下面重试，若反复出现请不要用无痕/私密模式打开。</p>'+
+        '<p class="ob-sub">'+esc((e&&e.message)||'生成超时')+'。点下面重试，若反复出现请不要用无痕模式打开。</p>'+
         '<button class="ob-cta" onclick="location.reload()">重试</button></div></div></div>';
     };
-    const dog=setTimeout(()=>{if(!done)fail(null);},6000);
-    setTimeout(()=>{
-      try{finishOB();done=true;clearTimeout(dog);}
-      catch(e){done=true;clearTimeout(dog);fail(e);}
-    },500);
+    const dog=setTimeout(()=>{if(!doneF)fail(null);},6000);
+    setTimeout(()=>{try{finishOB();doneF=true;clearTimeout(dog);}catch(e){doneF=true;clearTimeout(dog);fail(e);}},500);
   }
 }
 window.obNext=function(){OB.i++;renderOB();};
@@ -412,46 +1330,6 @@ window.obPick=function(id,v){
   OB.i++;renderOB();
 };
 window.obDate=function(id){OB.a[id]=$('#ob-date').value||f(new Date());OB.i++;renderOB();};
-
-/* ---------- AI free-text path ---------- */
-const API='https://vela-api-coral.vercel.app';
-/* 国内直连优先：浏览器直接调 DeepSeek（预充值余额封顶，风险有界）；失败再走海外中转 */
-const DSKB='NTEyOTJhNzBhZjhjZjE2YmU1NDRkMmU2YmVlYjM1ZDcta3M=';
-function dsk(){return atob(DSKB).split('').reverse().join('');}
-function aiSys(){
-  const today=f(new Date());
-  return '你是女性训练 App「Vela」的教练解析器。用户是备赛跑者，未来半年可能有多场比赛。把她的描述按固定五个维度完整解析为严格 JSON（不要输出任何其他内容）：\n{\n "recent": "…",   // 维度①当前水平：把最近跑步表现原样完整提取并算出配速，如"8km 56分(7:00/km)"；没提就空串\n "races": [{"name":"深圳半马","dist":"5k|10k|half|full|trail","date":"YYYY-MM-DD"}],\n                   // 维度②赛程表：提到的所有比赛一场不漏全部列出，按时间排序。日期模糊(如11月底)就取该月最后一个周日；只说"半马/全马/越野"没说名字则 name 留空。今天是 '+today+'\n "days": "2-3|4-5|6+",   // 维度③训练频率，未知给"2-3"\n "target": "…",   // 维度④目标：成绩/完赛目标一句话，如"半马安全完赛"或"全马破5"\n "notes": "…",    // 维度⑤约束：伤病、时间限制等一句话，无则空串\n "level": "3|5|10|15",   // 依据 recent 推档：配速>7:30或只能跑3km给"3"；能跑5km给"5"；能跑10km或5km配速<6:00给"10"；能跑15km+给"15"，未知给"5"\n "coach": "…"     // 温暖专业的教练回应(45字内)：必须引用她的具体数据，且如果有多场比赛要点出"共N场"的备赛节奏\n}';
-}
-const RANK={'5k':5,'10k':10,'trail':20,'half':21,'full':42};
-function racesOf(pr){
-  let rs=(pr.races&&pr.races.length)?pr.races:(pr.race&&pr.race.date?[{name:'',dist:pr.race.dist,date:pr.race.date}]:[]);
-  return rs.filter(r=>r&&DIST_PEAK[r.dist]&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')).slice().sort((x,y)=>x.date<y.date?-1:1);
-}
-function aRace(rs){return rs.reduce((m,r)=>RANK[r.dist]>=RANK[m.dist]?r:m,rs[0]);}
-/* 绝对超时：不依赖浏览器的 abort 支持，race 到点必拒绝 */
-function withTimeout(p,ms,tag){
-  return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error(tag+'超时'));},ms);})]);
-}
-async function aiParse(text){
-  /* 1st: direct DeepSeek (domestic, fast) */
-  try{
-    const r=await withTimeout(fetch('https://api.deepseek.com/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json',Authorization:'Bearer '+dsk()},
-      body:JSON.stringify({model:'deepseek-chat',temperature:0.2,max_tokens:400,
-        response_format:{type:'json_object'},
-        messages:[{role:'system',content:aiSys()},{role:'user',content:text}]})}),15000,'直连');
-    if(!r.ok)throw new Error('ds '+r.status);
-    const d=await withTimeout(r.json(),8000,'读取');
-    return JSON.parse(d.choices[0].message.content);
-  }catch(e){
-    /* 2nd: overseas relay fallback */
-    const r=await withTimeout(fetch(API+'/api/ai',{method:'POST',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}),10000,'中转');
-    if(!r.ok)throw new Error('网络不给力');
-    return withTimeout(r.json(),8000,'读取');
-  }
-}
 window.obAIStart=function(){
   $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="OB.i=1;renderOB()">‹ 返回</button>'+
     '<div class="ob-body"><div class="ob-step">'+
@@ -466,21 +1344,18 @@ window.obAIGo=async function(){
   const t=($('#ai-text').value||'').trim();
   if(t.length<4)return;
   const btn=$('#ai-go');btn.disabled=true;
-  const phases=['教练在听…','正在理解你的水平…','正在换算目标…'];
+  const phases=['教练在听…','正在理解你的水平…','正在换算赛程…'];
   let pi=0;btn.textContent=phases[0];
   clearInterval(aiTick);aiTick=setInterval(()=>{pi=(pi+1)%phases.length;if($('#ai-go'))$('#ai-go').textContent=phases[pi];},2200);
   try{
     const d=await aiParse(t);
     clearInterval(aiTick);
     OB.a.goal='race';
-    /* normalize races: new schema (races[]) or legacy (dist/date) */
     let rs=(d.races||[]).filter(r=>r&&DIST_PEAK[r.dist]&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||''));
     if(!rs.length&&d.dist&&DIST_PEAK[d.dist])rs=[{name:'',dist:d.dist,date:d.date||f(addD(new Date(),84))}];
     if(!rs.length)rs=[{name:'',dist:'10k',date:f(addD(new Date(),84))}];
     rs.sort((x,y)=>x.date<y.date?-1:1);
     OB.a.races=rs;
-    const prim=aRace(rs);
-    OB.a.dist=prim.dist;OB.a.racedate=prim.date;
     OB.a.level=d.level||'5';OB.a.days=d.days||'2-3';
     OB.aiNotes=[d.target||'',d.notes||''].filter(Boolean).join('；');
     const tags=[];
@@ -501,60 +1376,27 @@ window.obAIGo=async function(){
     btn.disabled=false;btn.textContent='再试一次 →';
     let eb=document.getElementById('ai-err');
     if(!eb){eb=document.createElement('div');eb.id='ai-err';eb.className='ob-coach';eb.style.color='#A03A55';btn.parentNode.insertBefore(eb,btn);}
-    eb.innerHTML='😣 教练暂时联系不上（'+esc(e.message||'未知')+'）。<br>可以点下面再试一次，或 <a href="javascript:obAIFallback()" style="color:#B04E77;font-weight:700">改用点选回答</a>。';
+    eb.innerHTML='😣 教练暂时联系不上（'+esc(e.message||'未知')+'）。<br>可以点下面再试一次，或 <a href="javascript:obAIFallback()" style="color:var(--plum);font-weight:700">改用点选回答</a>。';
   }
+};
+window.obAIConfirm=function(){
+  const steps=obSteps();
+  OB.i=steps.findIndex(x=>x.id==='cycle');
+  if(OB.i<0)OB.i=steps.length-1;
+  renderOB();
 };
 window.obAIFallback=function(){
   OB.a.aiFail=true;
   const steps=obSteps();
-  OB.i=steps.findIndex(s=>s.id==='dist');
+  OB.i=steps.findIndex(x=>x.id==='dist');
   renderOB();
 };
-window.obAIConfirm=function(){
-  const steps=obSteps();
-  OB.i=steps.findIndex(s=>s.id==='cycle');
-  if(OB.i<0)OB.i=steps.length-1;
-  renderOB();
-};
-
-/* ---------- recovery code & cloud sync ---------- */
-function genCode(){
-  const CS='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  const four=()=>Array.from({length:4},()=>CS[Math.floor(Math.random()*CS.length)]).join('');
-  return 'VELA-'+four()+'-'+four();
-}
-let syncT=null;
-function cloudPush(){
-  if(!state.code||!state.profile)return;
-  clearTimeout(syncT);
-  syncT=setTimeout(()=>{
-    fetch(API+'/api/u/'+state.code,{method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({profile:{...state.profile,planStart:state.planStart},checkins:state.checkins})})
-      .then(()=>{state.syncedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}})
-      .catch(()=>{});
-  },2500);
-}
-async function cloudPull(){
-  if(!state.code)return;
-  try{
-    const r=await fetch(API+'/api/u/'+state.code);
-    if(!r.ok)return;
-    const d=await r.json();
-    if(d.updatedAt>(state.updatedAt||0)){
-      state.profile={...d.profile};
-      state.planStart=d.profile.planStart||state.planStart;
-      state.checkins={...state.checkins,...(d.checkins||{})};
-      state.updatedAt=d.updatedAt;
-      save();renderToday();renderPlan();renderMe();
-    }
-  }catch(e){}
-}
 window.obRestoreStart=function(){
   $('#ob').innerHTML='<div class="ob-wrap"><button class="ob-back" onclick="renderOB()">‹ 返回</button>'+
     '<div class="ob-body"><div class="ob-step">'+
     '<div class="ob-title">输入恢复码</div>'+
-    '<p class="ob-sub">就是「我的」页里那串 VELA- 开头的码。</p>'+
-    '<div class="ob-date"><input type="text" id="rc-code" placeholder="VELA-XXXX-XXXX" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.06em"></div>'+
+    '<p class="ob-sub">就是设置页里那串 VELA- 开头的码。</p>'+
+    '<input type="text" id="rc-code" class="ob-code-input" placeholder="VELA-XXXX-XXXX" autocapitalize="characters" autocomplete="off">'+
     '<button class="ob-cta" id="rc-go" onclick="obRestoreGo()">找回我的数据</button>'+
     '</div></div></div>';
 };
@@ -567,9 +1409,12 @@ window.obRestoreGo=async function(){
     if(r.status===404)throw new Error('没找到这个恢复码对应的数据');
     if(!r.ok)throw new Error('网络不给力');
     const d=await r.json();
-    state.profile={...d.profile};
-    state.planStart=d.profile.planStart||f(monday(new Date()));
+    state.settings={...DEFAULTS,...d.profile};
+    state.planStart=(d.profile&&d.profile.planStart)||f(monday(new Date()));
     state.checkins=d.checkins||{};
+    state.overrides=d.overrides||{};
+    state.cycleStarts=d.cycleStarts||(state.settings.lastPeriod?[state.settings.lastPeriod]:[]);
+    state.overdueChecks=d.overdueChecks||[];
     state.code=code;state.updatedAt=d.updatedAt;
     save();boot();
   }catch(e){
@@ -579,211 +1424,37 @@ window.obRestoreGo=async function(){
 };
 function finishOB(){
   const a=OB.a;
-  state.profile={
-    goal:a.goal,
-    race:a.goal==='race'?{dist:a.dist,date:a.racedate}:null,
-    races:a.goal==='race'?(a.races||[{name:'',dist:a.dist,date:a.racedate}]):[],
-    level:a.level||'5',
-    style:a.style||'',
-    days:a.days||'2-3',
-    notes:OB.aiNotes||'',
-    cycle:{on:a.cycle==='on',last:a.cyclelast||'',len:Number(a.cyclelen)||28}
-  };
+  state.settings={...state.settings,
+    goal:a.goal||'fitness',
+    races:a.goal==='race'?(a.races||(a.dist?[{name:'',dist:a.dist,date:a.racedate||f(addD(new Date(),84))}]:[])):[],
+    level:a.level||'5',days:a.days||'2-3',style:a.style||'',notesAI:OB.aiNotes||'',
+    cycleOn:a.cycle==='on',
+    lastPeriod:a.cycle==='on'?(a.cyclelast||''):state.settings.lastPeriod,
+    cycleLen:Number(a.cyclelen)||state.settings.cycleLen||28};
+  if(state.settings.lastPeriod)state.cycleStarts=[state.settings.lastPeriod];
   state.planStart=f(monday(new Date()));
   if(!state.code)state.code=genCode();
   save();
   boot();
 }
-
-/* ---------- app ---------- */
-let curView='today',feelToday=null,calCur=null;
-function switchView(v){curView=v;
-  document.querySelectorAll('.view').forEach(el=>el.classList.toggle('on',el.id==='view-'+v));
-  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  window.scrollTo(0,0);
-}
-window.switchView=switchView;
-document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
-
-function goalLabel(){
-  const pr=state.profile;
-  if(pr.goal==='race'){
-    const rs=racesOf(pr);
-    if(!rs.length)return '备赛';
-    const next=rs.find(r=>r.date>=todayStr())||rs[rs.length-1];
-    return (next.name||DIST_NAME[next.dist])+' · T−'+Math.max(0,dayDiff(p(next.date),new Date()))+(rs.length>1?' · 共'+rs.length+'场':'');
-  }
-  return{fatloss:'减脂塑形',flex:'柔韧与平衡',fitness:'体能提升'}[pr.goal];
-}
-function streak(){
-  let n=0,d=p(todayStr());
-  if(!(state.checkins[todayStr()]&&state.checkins[todayStr()].done))d=addD(d,-1);
-  while(true){const c=state.checkins[f(d)];if(c&&c.done){n++;d=addD(d,-1);}else break;}
-  return n;
-}
-function celebrate(){
-  try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;}catch(e){}
-  let cv=document.getElementById('cf');
-  if(!cv){cv=document.createElement('canvas');cv.id='cf';cv.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99';document.body.appendChild(cv);}
-  cv.width=innerWidth;cv.height=innerHeight;
-  const ctx=cv.getContext('2d');
-  const cols=['#C2426E','#F2C9DA','#7E2E5C','#FFF6F9','#E8A3B8'];
-  const ps=Array.from({length:90},()=>({x:cv.width/2,y:cv.height*0.4,vx:(Math.random()-0.5)*11,vy:-(Math.random()*9+4),r:Math.random()*5+3,c:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*6}));
-  let t0=null;
-  (function step(ts){
-    if(!t0)t0=ts;const el=ts-t0;
-    ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.globalAlpha=Math.max(0,1-el/1400);
-    ps.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.vy+=0.26;q.rot+=0.1;
-      ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.rot);ctx.fillStyle=q.c;ctx.fillRect(-q.r,-q.r/2,q.r*2,q.r);ctx.restore();});
-    ctx.globalAlpha=1;
-    if(el<1500)requestAnimationFrame(step);else ctx.clearRect(0,0,cv.width,cv.height);
-  })(performance.now());
-}
-
-function renderToday(){
-  const ds=todayStr();
-  const d=p(ds);
-  const ci=state.checkins[ds];
-  let w=planFor(ds);
-  const ph=phaseInfo(ds);
-  let note='';
-  if(feelToday==='bad'&&w.t!=='rest'){
-    note='今天状态不行就直接休息，或者只做原计划的一半。可持续 > 完美。';
-  }else if(ph&&ph.key==='foll'&&(w.t==='long'||w.t==='int'||w.t==='tempo'||w.t==='hill')){
-    note='卵泡期是身体状态的黄金窗口，今天的课值得认真完成。';
-  }else if(ph&&ph.key==='lute2'){
-    note='黄体期后段，体感偏沉是正常的，允许自己慢一点。';
-  }
-  let h='<div class="card">';
-  h+='<span class="t-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日 · 周'+WD[d.getDay()]+'</span>';
-  if(ph)h+='<span class="t-phase">'+ph.emoji+' '+esc(ph.name)+'</span>';
-  h+='<div class="t-big">'+esc(w.label)+'</div>';
-  h+='<div class="t-detail">'+esc(w.detail)+'</div>';
-  if(note)h+='<div class="t-note">'+esc(note)+'</div>';
-  if(ci&&ci.done){
-    h+='<div class="done-line">✓ 今天完成了，漂亮</div>';
-    if(streak()>1)h+='<div class="streak">🔥 连续 '+streak()+' 天</div>';
-  }else{
-    h+='<div class="t-btns"><button class="b-main" onclick="markDone()">'+(w.t==='rest'?'✓ 今天好好休息':'✓ 完成今日')+'</button></div>';
-    h+='<div class="feel"><span>今天感觉：</span>'+
-      [['good','很好'],['ok','一般'],['bad','不太行']].map(x=>
-      '<button class="'+(feelToday===x[0]?'on':'')+'" onclick="setFeel(\''+x[0]+'\')">'+x[1]+'</button>').join('')+'</div>';
-  }
-  if(ph&&state.profile.cycle.on){
-    h+='<div class="t-btns" style="margin-top:16px"><button class="b-soft" onclick="periodToday()">🩸 今天月经来了（第 1 天）</button></div>';
-  }
-  h+='</div>';
-  /* week strip */
-  h+='<div class="card"><h2 class="sec">本周</h2><div class="week-strip">';
-  const mon=monday(d);
-  for(let i=0;i<7;i++){
-    const k=f(addD(mon,i)),dd=addD(mon,i);
-    const ww=planFor(k);
-    const done=state.checkins[k]&&state.checkins[k].done;
-    h+='<div class="ws'+(k===ds?' today':'')+(done?' done':'')+'">';
-    h+='<div class="d">'+WD[dd.getDay()]+'</div>';
-    h+='<div class="k num">'+(done?'✓':ww.km?ww.km:'')+(!done&&!ww.km&&ww.min?ww.min+"'":'')+(!done&&ww.t==='rest'?'休':'')+'</div>';
-    h+='</div>';
-  }
-  h+='</div></div>';
-  $('#view-today').innerHTML=h;
-  $('#h-goal').innerHTML='目标 <b>'+esc(goalLabel())+'</b>';
-}
-window.setFeel=function(v){feelToday=(feelToday===v?null:v);renderToday();};
-window.markDone=function(){
-  const ds=todayStr();
-  const w=planFor(ds);
-  state.checkins[ds]={done:true,label:w.label,km:w.km||0};
-  save();celebrate();renderToday();renderPlan();
-};
-window.periodToday=function(){
-  state.profile.cycle.last=todayStr();
-  save();renderToday();renderPlan();
-};
-
-function renderPlan(){
-  const ds=todayStr();
-  if(!calCur)calCur=new Date(p(ds).getFullYear(),p(ds).getMonth(),1);
-  let h='<div class="card"><h2 class="sec">本周安排</h2>';
-  const mon=monday(p(ds));
-  for(let i=0;i<7;i++){
-    const k=f(addD(mon,i)),dd=addD(mon,i);
-    const w=planFor(k);
-    const done=state.checkins[k]&&state.checkins[k].done;
-    h+='<div class="day-row'+(k===ds?' today-row':'')+'">';
-    h+='<span class="dt">'+k.slice(5).replace('-','/')+' 周'+WD[dd.getDay()]+'</span>';
-    h+='<span class="nm">'+(done?'✓ ':'')+esc(w.label)+'<small>'+esc(w.detail)+'</small></span></div>';
-  }
-  h+='</div>';
-  /* month */
-  const y=calCur.getFullYear(),m=calCur.getMonth();
-  h+='<div class="card"><div class="cal-head"><span class="cal-title">'+y+' 年 '+(m+1)+' 月</span>';
-  h+='<span class="cal-nav"><button onclick="calNav(-1)">‹</button> <button onclick="calNav(1)">›</button></span></div>';
-  h+='<div class="cal">';
-  ['一','二','三','四','五','六','日'].forEach(x=>h+='<div class="wdh">'+x+'</div>');
-  const first=new Date(y,m,1),startIdx=(first.getDay()+6)%7,daysIn=new Date(y,m+1,0).getDate();
-  for(let i=0;i<startIdx;i++)h+='<div></div>';
-  for(let dd=1;dd<=daysIn;dd++){
-    const k=f(new Date(y,m,dd));
-    const w=planFor(k);
-    const done=state.checkins[k]&&state.checkins[k].done;
-    const race=w.t==='race';
-    h+='<div class="cell'+(k===ds?' today':'')+(done?' done':'')+'">';
-    h+='<div class="dn num">'+dd+'</div>';
-    h+='<div class="ind">'+(done?'✓':race?'🏁':w.km?w.km:w.min?w.min+"'":'·')+'</div>';
-    h+='</div>';
-  }
-  h+='</div><p class="hint">数字 = 公里数或分钟数 · 玫瑰色 = 已完成 · 🏁 = 比赛日'+(state.profile.cycle.on?' · 经期前两天自动排休':'')+'</p></div>';
-  $('#view-plan').innerHTML=h;
-}
-window.calNav=function(n){calCur=addM(calCur,n);renderPlan();};
-
-function renderMe(){
-  const pr=state.profile;
-  let h='<div class="card"><h2 class="sec">我的计划</h2>';
-  h+='<div class="p-row"><span>目标</span><b>'+esc(goalLabel())+'</b></div>';
-  if(pr.goal==='race')racesOf(pr).forEach(r=>{
-    h+='<div class="p-row"><span>🏁 '+esc(r.name||DIST_NAME[r.dist])+'</span><b class="num">'+esc(r.date)+'</b></div>';
-  });
-  h+='<div class="p-row"><span>每周训练</span><b>'+esc(pr.days)+' 天</b></div>';
-  h+='<div class="p-row"><span>周期排课</span><b>'+(pr.cycle.on?'开启 🌙':'未开启')+'</b></div>';
-  if(pr.notes)h+='<div class="p-row"><span>教练备注</span><b>'+esc(pr.notes)+'</b></div>';
-  h+='<div class="t-btns" style="margin-top:18px"><button class="b-main" onclick="restartOB()">重新设定目标</button></div>';
-  h+='<p class="hint">重新设定会生成新计划，已完成的打卡记录会保留。</p></div>';
-  if(state.code){
-    h+='<div class="card"><h2 class="sec">恢复码</h2>';
-    h+='<div style="font-size:24px;font-weight:800;letter-spacing:.08em;font-family:ui-monospace,monospace">'+esc(state.code)+'</div>';
-    h+='<p class="hint">你的数据（目标、经期日期、打卡）会自动同步到云端。换手机或清了缓存后，在欢迎页点「找回我的数据」输入这串码即可全部找回。请抄下来，别公开发出去。'+(state.syncedAt?'<br>上次同步：'+new Date(state.syncedAt).toLocaleString():'')+'</p></div>';
-  }
-  h+='<div class="card"><h2 class="sec">关于 Vela</h2><p class="hint" style="margin-top:0">Vela 相信：训练计划应该围着你的生活转，而不是反过来。每天完成后点一下 ✓，课表会自动跟着你的节奏走。<br><br>由 Vela 引擎驱动 · 月夜跑者 🌙</p></div>';
-  $('#view-me').innerHTML=h;
-}
-window.restartOB=function(){
-  state.profile=null;save();
-  OB.i=0;OB.a={};
-  boot();
-};
-
 function boot(){
-  const bm=document.getElementById('boot-msg');
-  if(bm)bm.style.display='none';
-  if(!state.profile){
-    $('#app').hidden=true;document.querySelector('nav.tabs').hidden=true;
-    $('#ob').hidden=false;renderOB();
+  const ob=$('#ob');
+  const nav=document.querySelector('nav.tabs');
+  if(!state.settings.goal){
+    ob.hidden=false;nav.style.display='none';$('#app').style.visibility='hidden';
+    OB.i=0;renderOB();
   }else{
-    $('#ob').hidden=true;$('#app').hidden=false;document.querySelector('nav.tabs').hidden=false;
-    renderToday();renderPlan();renderMe();switchView('today');
+    ob.hidden=true;nav.style.display='';$('#app').style.visibility='';
+    render();switchView('today');
     cloudPull();
   }
 }
+
 try{boot();}
 catch(e){
-  var bm=document.getElementById('boot-msg');
-  if(bm){bm.style.display='flex';
-    bm.innerHTML='<div style="max-width:320px;text-align:center;padding:20px"><b style="color:#B04E77">本地数据和新版本不兼容</b><br><br><code style="font-size:12px;word-break:break-all">'+String(e.message||e)+'</code><br><br><button onclick="localStorage.removeItem(\'vela.go.v1\');location.reload()" style="font:inherit;background:#B04E77;color:#fff;border:none;border-radius:99px;padding:12px 24px;font-weight:700">清除本地数据，重新开始</button></div>';
-  }
+  var bm=document.createElement('div');
+  bm.style.cssText='position:fixed;inset:0;z-index:99;background:#FBF6F8;display:flex;align-items:center;justify-content:center';
+  bm.innerHTML='<div style="max-width:320px;text-align:center;padding:20px"><b style="color:#B04E77">本地数据和新版本不兼容</b><br><br><code style="font-size:12px;word-break:break-all">'+String(e.message||e)+'</code><br><br><button onclick="localStorage.removeItem(\'vela.go.v2\');location.reload()" style="font:inherit;background:#B04E77;color:#fff;border:none;border-radius:99px;padding:12px 24px;font-weight:700">清除本地数据，重新开始</button></div>';
+  document.body.appendChild(bm);
 }
 </script>
-</body>
-</html>
