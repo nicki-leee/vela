@@ -625,6 +625,46 @@ function weekDone(ds){
   return '本周已完成 '+done+'/'+tot;
 }
 
+/* ---------- Apple Health sync (via iOS Shortcuts -> backend inbox) ---------- */
+const HAPI='https://vela-api-coral.vercel.app/api/health/VELA-NK26-HLTH';
+function sleepIdx(h){return h<5.5?0:h<6.5?1:h<7.5?2:3;}
+function healthApply(doc){
+  if(!doc||!doc.days)return 0;
+  let applied=0;
+  const dates=Object.keys(doc.days).sort();
+  const {map}=genPlan();
+  dates.forEach(d=>{
+    const day=doc.days[d];
+    const ci=state.checkins[d]||(state.checkins[d]={sleep:null,work:null,time:null,feel:null,weather:null});
+    if(day.sleepHours!=null&&ci.sleep==null){ci.sleep=sleepIdx(day.sleepHours);ci.sleepAuto=day.sleepHours;applied++;}
+    if(day.mens===true){
+      const near=state.cycleStarts.some(cs=>Math.abs(dayDiff(p(d),p(cs)))<7);
+      const prev=doc.days[f(addD(p(d),-1))];
+      const isFirst=!(prev&&prev.mens===true);
+      if(!near&&isFirst){state.cycleStarts.push(d);state.settings.lastPeriod=d;ci.mensAuto=true;applied++;}
+    }
+    if(day.runKm!=null&&day.runKm>=2&&!ci.done&&!ci.skipped){
+      const w=plannedFor(d,map);
+      const t=(day.workoutType||'').toLowerCase();
+      let dt = t.indexOf('run')>=0||t.indexOf('跑')>=0 ? (day.runKm>=10?'long':'easy')
+             : t.indexOf('yoga')>=0||t.indexOf('瑜伽')>=0 ? 'stretch'
+             : t.indexOf('strength')>=0||t.indexOf('functional')>=0||t.indexOf('力量')>=0 ? 'hyrox'
+             : t.indexOf('hik')>=0||t.indexOf('徒步')>=0 ? 'hike'
+             : (w.t!=='rest'?w.t:(day.runKm>=10?'long':'easy'));
+      ci.done=true;ci.doneKm=day.runKm;ci.doneType=dt;ci.healthAuto=true;applied++;
+    }
+  });
+  if(applied){state.healthSyncAt=Date.now();save();}
+  return applied;
+}
+async function healthPull(){
+  try{
+    const r=await fetch(HAPI);
+    if(!r.ok)return;
+    const doc=await r.json();
+    if(healthApply(doc)>0)render();
+  }catch(e){}
+}
 /* ---------- home ---------- */
 function mensClass(k){
   const pd=phasePredict(k);
@@ -686,7 +726,7 @@ function renderHome(ds){
   if(done){
     /* ---- 今天我完成了什么 ---- */
     const dt=TYPES[ci.doneType]||TYPES.rest;
-    h+='<p class="h-kicker">今天我完成了什么</p>';
+    h+='<p class="h-kicker">今天我完成了什么'+(ci.healthAuto?' · 🍎自动同步':'')+'</p>';
     h+='<div class="done-big">✓ '+esc(ci.doneType==='rest'?'好好休息了':dt.label)+(ci.doneKm>0?' <span class="num">'+(ci.doneKm%1?ci.doneKm.toFixed(1):ci.doneKm)+'</span> km':'')+'</div>';
     if(ci.extras&&ci.extras.length)h+='<div style="margin-top:10px">'+ci.extras.map(e=>'<span class="ex-done">'+(TYPE_EMOJI[e.t]||'✓')+' '+esc((TYPES[e.t]||TYPES.cross).label)+'</span>').join('')+'</div>';
     if(sk>0)h+='<p class="streak">🔥 连续 '+sk+' 天</p>';
@@ -1078,7 +1118,7 @@ function renderSettings(){
   h+='<div class="card"><h2 class="sec">数据</h2>';
   h+='<div class="btnrow" style="margin-top:0"><button class="b-sec" onclick="exportData()">导出</button><button class="b-ghost" onclick="importData()">导入</button></div>';
   h+='<textarea id="io" placeholder="导出后复制保存；导入时把 JSON 粘到这里再点导入"></textarea>';
-  h+='<p class="hint">数据只存在本机浏览器里。换手机或清缓存前先导出。</p></div>';
+  h+='<p class="hint">数据只存在本机浏览器里。换手机或清缓存前先导出。'+(state.healthSyncAt?'<br>🍎 Apple 健康上次同步：'+new Date(state.healthSyncAt).toLocaleString():'<br>🍎 Apple 健康：未连接（配好快捷指令后自动出现）')+'</p></div>';
   $('#view-settings').innerHTML=h;
 }
 window.saveSettings=function(){
@@ -1103,6 +1143,7 @@ window.importData=function(){
 
 render();
 switchView('today');
+healthPull();
 </script>
 
 </body>
