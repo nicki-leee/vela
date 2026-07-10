@@ -2,17 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
-<link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=3">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <title>Vela 轻盈向前</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Vela">
-<style>
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><style>
   :root{
     --navy:#2E4256; --navy-deep:#22344A;
     --plum:#8E5274; --plum-bg:#F3E3EC;
@@ -174,6 +171,15 @@
   .cell .ind{font-size:12.5px;font-weight:800;margin-top:3px}
   .cell .sub{font-size:9px;font-weight:700;color:var(--mut);letter-spacing:.02em}
   .cell .mens{display:block;width:5px;height:5px;border-radius:99px;background:var(--rose);margin:3px auto 0}
+  .cell.mens1{border:1.5px dashed var(--rose) !important;background:var(--rose-bg)}
+  .cell.mens2{border:1.5px dashed #EFC3D3 !important;background:rgba(250,233,239,.45)}
+  .review{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.72);backdrop-filter:blur(14px);
+    border:1.5px dashed #D9BFE5;border-radius:18px;padding:13px 16px;margin-bottom:14px;font-size:13.5px;font-weight:600;color:var(--soft)}
+  .review b{color:var(--ink)}
+  .review button{border-radius:99px;padding:8px 15px;font-size:13px;font-weight:700}
+  .rv-yes{background:var(--green-bg);color:var(--green)}
+  .rv-no{background:#fff;border:1.5px solid var(--line) !important;color:var(--soft)}
+  .skip-note{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:10px}
   .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;font-weight:700;color:var(--soft)}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:99px;margin-right:5px;font-style:normal}
   .day-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}
@@ -620,6 +626,43 @@ function weekDone(ds){
 }
 
 /* ---------- home ---------- */
+function mensClass(k){
+  const pd=phasePredict(k);
+  if(pd.key==='mens1')return ' mens1';
+  if(pd.day!=null&&pd.day<=5)return ' mens2';
+  return '';
+}
+function yesterdayReview(ds){
+  const y=f(addD(p(ds),-1));
+  if(y<state.planStart)return '';
+  const {map}=genPlan();
+  const w=plannedFor(y,map);
+  if(!(w.km>0||w.min>0))return '';
+  const ci=state.checkins[y];
+  if(ci&&(ci.done||ci.skipped))return '';
+  const nm=(TYPES[w.t]||TYPES.rest).label;
+  return '<div class="review"><span>昨天的 <b>'+esc(nm)+(w.km?' '+w.km+'km':'')+'</b> 完成了吗？</span>'+
+    '<button class="rv-yes" onclick="reviewDone(\''+y+'\')">✓ 完成了</button>'+
+    '<button class="rv-no" onclick="reviewSkip(\''+y+'\')">没完成</button></div>';
+}
+window.reviewDone=function(y){
+  const {map}=genPlan();
+  const w=plannedFor(y,map);
+  const prev=state.checkins[y]||{sleep:1,work:1,time:1,feel:1,weather:0};
+  state.checkins[y]={...prev,done:true,doneKm:w.km||0,doneType:w.t};
+  celebrate();render();
+};
+window.reviewSkip=function(y){
+  const prev=state.checkins[y]||{sleep:1,work:1,time:1,feel:1,weather:0};
+  state.checkins[y]={...prev,skipped:true};
+  render();
+};
+window.skipToday=function(){
+  const ds=todayStr();
+  const prev=state.checkins[ds]||{sleep:1,work:1,time:1,feel:1,weather:0};
+  state.checkins[ds]={...prev,skipped:true};
+  render();
+};
 function renderHome(ds){
   const a=advice(ds);
   const ci=state.checkins[ds];
@@ -632,6 +675,7 @@ function renderHome(ds){
   h+='<div class="home-top"><span class="wordmark"><b>Vela</b><i>RUN · RECOVER</i></span>';
   h+='<span class="h-count num">'+(next?esc(next.name)+' <b>T−'+dayDiff(p(next.date),new Date())+'</b>':'赛季结束 🎉')+'</span></div>';
   if(a.ph.key==='unset')h+='<div class="banner">在设置（右上角 ⚙︎）填上次月经第一天，解锁周期排课 →</div>';
+  h+=yesterdayReview(ds);
   h+='<div class="flip-wrap"><div class="flip" id="flip">';
   /* front */
   const done=ci&&ci.done;
@@ -664,6 +708,8 @@ function renderHome(ds){
     h+='</div>';
     h+='<div class="extra-row"><button class="chip-btn" onclick="toggleExtras()">'+(extrasOpen?'收起':'＋ 记一笔其他')+'</button>'+(extrasOpen?EXTRAS.map(e=>'<button class="chip-btn" onclick="logExtra(\''+e[0]+'\')">＋'+e[1]+'</button>').join(''):'')+'</div>';
   }
+  if(ci&&ci.skipped&&!ci.done)h+='<p class="skip-note">已标记「没完成」· 关键课会自动顺延接住，不算欠账</p>';
+  else if(!done&&eff.t!=='rest'&&a.score!=null)h+='<p class="skip-note"><a href="javascript:skipToday()" style="color:var(--mut)">今天练不成？点这里标记，课表会自动接住</a></p>';
   h+='<button class="h-why" onclick="flipCard()">为什么是这个安排 ↻</button>';
   h+='</div>';
   /* back */
@@ -852,11 +898,11 @@ function renderPlan(ds){
     h+=calGrid(calCur,(k,dd)=>{
       const w=plannedFor(k,map);
       const ci=state.checkins[k];
-      const mens=phasePredict(k).key==='mens1';
+      const mcls=mensClass(k);
       const isRace=['race','hyroxrace','trail','event'].includes(w.t);
       if(ci&&ci.done){
         const bg=TYPE_INK[ci.doneType]||'#5E82A6';
-        let c='<div class="cell fill'+(k===todayStr()?' today':'')+'" style="background:'+bg+'" onclick="selCal(\''+k+'\')">';
+        let c='<div class="cell fill'+(k===todayStr()?' today':'')+mcls+'" style="background:'+bg+'" onclick="selCal(\''+k+'\')">';
         c+='<div class="dn num">'+dd+'</div>';
         c+='<div class="em">'+(TYPE_EMOJI[ci.doneType]||'✓')+'</div>';
         c+='<div class="klabel num">'+(ci.doneKm>0?(ci.doneKm%1?ci.doneKm.toFixed(1):ci.doneKm)+'k':'✓')+'</div>';
@@ -865,14 +911,13 @@ function renderPlan(ds){
         return c;
       }
       const ink=TYPE_INK[w.t]||'#C9CDD6';
-      let c='<div class="cell'+(k===todayStr()?' today':'')+'" onclick="selCal(\''+k+'\')">';
+      let c='<div class="cell'+(k===todayStr()?' today':'')+mcls+'" onclick="selCal(\''+k+'\')">';
       c+='<div class="dn num">'+dd+'</div>';
       if(isRace)c+='<div class="ind" style="color:'+ink+'">★</div>';
       else if(w.km>0)c+='<div class="ind num" style="color:'+ink+'">'+w.km+'</div>';
       else if(w.min)c+='<div class="ind" style="color:'+ink+'">H</div>';
       else c+='<div class="ind" style="color:#D9D2DC">·</div>';
-      if(mens)c+='<span class="mens"></span>';
-      c+='</div>';
+            c+='</div>';
       return c;
     });
     h+='<div class="legend"><span><i style="background:#8E5274"></i>长距离/强度</span><span><i style="background:#5E82A6"></i>轻松跑</span><span><i style="background:#2E4256"></i>Hyrox</span><span><i style="background:#C95C7E"></i>预测经期</span><span>★ 比赛</span></div>';
@@ -958,7 +1003,7 @@ function renderHistory(ds){
       const dk=ci.doneKm!=null?ci.doneKm:(w.km||0);
       const dt=ci.doneType||w.t;
       const bg=TYPE_INK[dt]||'#5E82A6';
-      let c='<div class="cell fill'+(k===selHist?' today':'')+'" style="background:'+bg+'" onclick="histSel(\''+k+'\')">';
+      let c='<div class="cell fill'+(k===selHist?' today':'')+mensClass(k)+'" style="background:'+bg+'" onclick="histSel(\''+k+'\')">';
       c+='<div class="dn num">'+dd+'</div>';
       c+='<div class="em">'+(TYPE_EMOJI[dt]||'✓')+'</div>';
       c+='<div class="klabel num">'+(dk>0?(dk%1?dk.toFixed(1):dk)+'k':'✓')+'</div>';
@@ -966,7 +1011,7 @@ function renderHistory(ds){
       c+='</div>';
       return c;
     }
-    let c='<div class="cell'+(k===ds?' today':'')+(k===selHist?' today':'')+'"'+(k<=ds?' onclick="histSel(\''+k+'\')"':'')+'><div class="dn num">'+dd+'</div>';
+    let c='<div class="cell'+(k===ds?' today':'')+(k===selHist?' today':'')+mensClass(k)+'"'+(k<=ds?' onclick="histSel(\''+k+'\')"':'')+'><div class="dn num">'+dd+'</div>';
     if(k<ds&&isSession)c+='<div class="p-mark miss">·</div>';
     else if(k>=ds&&isRace)c+='<div class="p-mark future" style="color:#8E5274">★</div>';
     else if(k>=ds&&isSession)c+='<div class="p-mark future">'+(w.km||'·')+'</div>';
